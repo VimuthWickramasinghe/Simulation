@@ -42,12 +42,16 @@ class BallMillCADGenerator:
         disc_radius = R_sun + r_vial + 30.0           # mm
         k_ratio = self.kin.gear_ratio_k
 
-        # Exact gear kinematics
-        z_planet = 20
-        z_sun = int(round(abs(k_ratio) * z_planet))
-        r_planet_pitch = R_sun * (z_planet / (z_sun + z_planet))
-        r_sun_pitch = R_sun * (z_sun / (z_sun + z_planet))
-        gear_module = (2.0 * R_sun) / (z_sun + z_planet)
+        # Exact gear kinematics with reversing intermediate idler gears
+        z_jar = 16
+        z_sun = int(round(abs(k_ratio) * z_jar))
+        z_idler = 14
+        gear_total_teeth = z_sun + 2 * z_idler + z_jar
+        gear_module = (2.0 * R_sun) / gear_total_teeth
+        r_sun_pitch = gear_module * z_sun / 2.0
+        r_idler_pitch = gear_module * z_idler / 2.0
+        r_jar_pitch = gear_module * z_jar / 2.0
+        r_idler_center = r_sun_pitch + r_idler_pitch
 
         scad_code = f"""// =====================================================================
 // PLANETARY BALL MILL FOR NANOPARTICLE SYNTHESIS
@@ -67,12 +71,15 @@ h_vial_total = h_vial + 22.0;
 num_vials = {n_vials};            // Number of vials
 gear_ratio_k = {k_ratio:.2f};     // Ratio omega / Omega
 
-z_planet = {z_planet};            // Planet gear teeth
+z_jar = {z_jar};                  // Planet jar gear teeth
+z_idler = {z_idler};              // Intermediate reversing idler teeth
 z_sun = {z_sun};                  // Sun gear teeth
 
-// Exact pitch radii satisfying: r_sun_pitch + r_planet_pitch = R_sun
-r_planet_pitch = {r_planet_pitch:.2f};
+// Exact pitch radii satisfying: r_sun_pitch + 2 * r_idler_pitch + r_jar_pitch = R_sun
 r_sun_pitch = {r_sun_pitch:.2f};
+r_idler_pitch = {r_idler_pitch:.2f};
+r_jar_pitch = {r_jar_pitch:.2f};
+r_idler_center = {r_idler_center:.2f};
 gear_module = {gear_module:.2f};  // Common module for perfect meshing
 gear_thick = 16.0;
 
@@ -89,11 +96,13 @@ shaft_diam = 28.0;
 // --- COLORS ---
 color_steel = [0.90, 0.91, 0.93, 1.0];      // Light Satin Steel
 color_gear_sun = [0.82, 0.65, 0.25, 1.0];   // Machined Bronze Sun Gear
+color_gear_idler = [0.10, 0.55, 0.85, 1.0]; // Reversing Idler Gear (Cyan/Steel)
 color_gear_planet = [0.45, 0.50, 0.58, 1.0];// Alloy Steel Planet Gear
 color_fin = [0.85, 0.88, 0.92, 1.0];        // Cooling Fin Aluminum
 color_lid = [0.15, 0.45, 0.85, 1.0];        // Anodized Blue Clamp Lid
 color_indicator = [0.95, 0.30, 0.15, 1.0];  // Rotational Indicator (Orange-Red)
 color_ball = [0.95, 0.78, 0.25, 1.0];       // Grinding Media
+color_sun_dot = [0.95, 0.20, 0.20, 1.0];    // High-contrast Sun Carrier Dot
 
 // --- MAIN ASSEMBLY ---
 module PlanetaryBallMillAssembly() {{
@@ -107,14 +116,23 @@ module PlanetaryBallMillAssembly() {{
     // 3. Central Drive Shaft & Sun Carrier Disc
     CentralCarrierUnit();
 
-    // 4. Planetary Vials with meshing Planet Gears, Cooling Fins & Indicators
+    // 4. Planetary Vials with Reversing Idler Gears & Planet Jar Gears
     for (i = [0 : num_vials - 1]) {{
         angle = i * (360.0 / num_vials);
         rotate([0, 0, angle]) {{
-            // Planet Gear at exact coplanar gear_z meshing with sun gear
+            // Intermediate Reversing Idler Gear meshing with Sun Gear and Jar Gear
+            translate([r_idler_center, 0, gear_z])
+                rotate([0, 0, (180.0 / z_idler)])
+                    MechanicalSpurGear(r = r_idler_pitch, teeth = z_idler, thickness = gear_thick, bore = 10, col = color_gear_idler);
+
+            // Idler Mounting Pin from carrier disc down to gear
+            translate([r_idler_center, 0, gear_z])
+                cylinder(r = 5.0, h = vial_z - gear_z);
+
+            // Planet Jar Gear at R_sun meshing with Idler Gear
             translate([R_sun, 0, gear_z])
-                rotate([0, 0, (180.0 / z_planet)])
-                    MechanicalSpurGear(r = r_planet_pitch, teeth = z_planet, thickness = gear_thick, bore = 14, col = color_gear_planet);
+                rotate([0, 0, (180.0 / z_jar)])
+                    MechanicalSpurGear(r = r_jar_pitch, teeth = z_jar, thickness = gear_thick, bore = 14, col = color_gear_planet);
 
             // Spindle shaft connecting gear through carrier disc
             translate([R_sun, 0, gear_z])
@@ -171,6 +189,11 @@ module CentralCarrierUnit() {{
         translate([0, 0, gear_z])
             cylinder(r = shaft_diam / 2, h = vial_z + 30);
     }}
+
+    // High-visibility rotation indicator dot on sun carrier disc
+    translate([disc_radius * 0.85 * cos(45), disc_radius * 0.85 * sin(45), disc_z + disc_thick])
+        color(color_sun_dot)
+            cylinder(r = 14.0, h = 3.5);
 
     // Motor Shaft Rotation Direction Indicator (Omega Arrow)
     color(color_indicator) {{
@@ -860,6 +883,13 @@ rotate([system_tilt_x, 0, 0])
             </div>
             <div class="tree-node">
               <div class="tree-row">
+                <input type="checkbox" class="tree-checkbox" id="chk-sun-dot" checked>
+                <span class="node-icon">🔴</span>
+                <span>Sun Wheel Rotation Dot</span>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row">
                 <input type="checkbox" class="tree-checkbox" id="chk-sungear" checked>
                 <span class="node-icon">⚙️</span>
                 <span>Stationary Sun Gear (Zs)</span>
@@ -873,12 +903,19 @@ rotate([system_tilt_x, 0, 0])
               </div>
             </div>
 
-            <div class="section-title" style="margin-top:10px;">Planetary Jars</div>
+            <div class="section-title" style="margin-top:10px;">Gears & Planetary Jars</div>
+            <div class="tree-node">
+              <div class="tree-row">
+                <input type="checkbox" class="tree-checkbox" id="chk-all-idlers" checked>
+                <span class="node-icon">⚙️</span>
+                <span>Reversing Idler Gears (4x)</span>
+              </div>
+            </div>
             <div class="tree-node">
               <div class="tree-row">
                 <input type="checkbox" class="tree-checkbox" id="chk-all-gears" checked>
                 <span class="node-icon">⚙️</span>
-                <span>All Planet Gears (Zp)</span>
+                <span>Planet Jar Gears (4x Zp)</span>
               </div>
             </div>
             <div class="tree-node">
@@ -971,19 +1008,27 @@ rotate([system_tilt_x, 0, 0])
           <button class="ctrl-btn ratio-btn" data-ratio="-3.0">k = -3.0</button>
         </div>
 
-        <!-- Gear Teeth & Pitch Diameter Display -->
+        <!-- Gear Teeth & Pitch Diameter Display with Reversing Idler -->
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px; margin-bottom:8px; font-size:11px;">
           <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-            <span>Sun Gear (Zs):</span>
-            <strong id="disp-sun-teeth">40 T (Ø 21.3)</strong>
+            <span>Stationary Sun (Zs):</span>
+            <strong id="disp-sun-teeth">32 T (Ø 13.5)</strong>
           </div>
           <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-            <span>Planet Gear (Zp):</span>
-            <strong id="disp-planet-teeth">20 T (Ø 10.7)</strong>
+            <span style="color:#0284c7;">Reversing Idler (Z_id):</span>
+            <strong id="disp-idler-teeth" style="color:#0284c7;">14 T (Ø 5.9)</strong>
           </div>
-          <div style="display:flex; justify-content:space-between; color:#16a34a;">
-            <span>Pitch Sum (rs + rp):</span>
+          <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+            <span>Planet Jar (Zp):</span>
+            <strong id="disp-planet-teeth">16 T (Ø 6.7)</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:#16a34a; margin-bottom:2px;">
+            <span>Pitch (rs+2r_id+rp):</span>
             <strong id="disp-pitch-sum">{R_sun:.1f} = R_sun (Exact)</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:#ea580c; border-top:1px dashed #cbd5e1; padding-top:2px;">
+            <span>Jar Direction:</span>
+            <strong>↺ Opposite to Sun Wheel</strong>
           </div>
         </div>
 
@@ -1367,6 +1412,68 @@ rotate([system_tilt_x, 0, 0])
     sunAssembly.add(sunDiscMesh);
     addBlackEdges(sunDiscMesh);
 
+    // High-visibility rotation indicator dot on the sun carrier wheel
+    const sunDotGroup = new THREE.Group();
+    const dotRadius = discRadius * 0.82;
+    const dotAngle = Math.PI / 4; // 45 deg between Jar 1 and Jar 2
+    const dotX = dotRadius * Math.cos(dotAngle);
+    const dotZ = dotRadius * Math.sin(dotAngle);
+
+    // 1. Primary Crimson Cylinder
+    const dotGeom = new THREE.CylinderGeometry(2.6, 2.6, 0.55, 32);
+    const dotMat = new THREE.MeshStandardMaterial({{
+      color: 0xef4444,
+      roughness: 0.2,
+      metalness: 0.5,
+      emissive: 0xb91c1c,
+      emissiveIntensity: 0.45
+    }});
+    const sunDotMesh = new THREE.Mesh(dotGeom, dotMat);
+    sunDotMesh.position.set(dotX, discY + discThickness + 0.28, dotZ);
+    sunDotGroup.add(sunDotMesh);
+    addBlackEdges(sunDotMesh);
+
+    // 2. High-contrast amber/yellow central pip
+    const pipGeom = new THREE.CylinderGeometry(1.2, 1.2, 0.7, 24);
+    const pipMat = new THREE.MeshStandardMaterial({{
+      color: 0xfacc15,
+      roughness: 0.15,
+      metalness: 0.3,
+      emissive: 0xeab308,
+      emissiveIntensity: 0.5
+    }});
+    const pipMesh = new THREE.Mesh(pipGeom, pipMat);
+    pipMesh.position.set(dotX, discY + discThickness + 0.35, dotZ);
+    sunDotGroup.add(pipMesh);
+    addBlackEdges(pipMesh);
+
+    // 3. Crisp white enamel bezel ring
+    const bezelGeom = new THREE.RingGeometry(2.6, 3.4, 32);
+    const bezelMat = new THREE.MeshBasicMaterial({{ color: 0xffffff, side: THREE.DoubleSide }});
+    const bezelMesh = new THREE.Mesh(bezelGeom, bezelMat);
+    bezelMesh.rotation.x = -Math.PI / 2;
+    bezelMesh.position.set(dotX, discY + discThickness + 0.30, dotZ);
+    sunDotGroup.add(bezelMesh);
+
+    // 4. Dark rim
+    const outerRimGeom = new THREE.RingGeometry(3.4, 3.9, 32);
+    const outerRimMat = new THREE.MeshBasicMaterial({{ color: 0x0f172a, side: THREE.DoubleSide }});
+    const outerRimMesh = new THREE.Mesh(outerRimGeom, outerRimMat);
+    outerRimMesh.rotation.x = -Math.PI / 2;
+    outerRimMesh.position.set(dotX, discY + discThickness + 0.31, dotZ);
+    sunDotGroup.add(outerRimMesh);
+
+    // 5. Outer edge indicator marker (visible when tilted horizontally at 90°)
+    const rimMarkerGeom = new THREE.BoxGeometry(2.8, discThickness * 0.85, 0.6);
+    const rimMarkerMat = new THREE.MeshStandardMaterial({{ color: 0xef4444, emissive: 0xb91c1c, emissiveIntensity: 0.4 }});
+    const rimMarkerMesh = new THREE.Mesh(rimMarkerGeom, rimMarkerMat);
+    rimMarkerMesh.position.set(discRadius * Math.cos(dotAngle), discY + discThickness / 2, discRadius * Math.sin(dotAngle));
+    rimMarkerMesh.rotation.y = -dotAngle;
+    sunDotGroup.add(rimMarkerMesh);
+    addBlackEdges(rimMarkerMesh);
+
+    sunAssembly.add(sunDotGroup);
+
     // Central Motor Drive Shaft & Indicator
     const shaftGroup = new THREE.Group();
     const shaftGeom = new THREE.CylinderGeometry(2.2, 2.2, vialBaseY + 14, 24);
@@ -1393,6 +1500,7 @@ rotate([system_tilt_x, 0, 0])
 
     // Materials
     const sunGearMat = new THREE.MeshStandardMaterial({{ color: 0xd97706, roughness: 0.35, metalness: 0.7 }});
+    const idlerGearMat = new THREE.MeshStandardMaterial({{ color: 0x0284c7, roughness: 0.32, metalness: 0.65 }});
     const planetGearMat = new THREE.MeshStandardMaterial({{ color: 0x64748b, roughness: 0.35, metalness: 0.6 }});
     const finMat = new THREE.MeshStandardMaterial({{ color: 0xf8fafc, roughness: 0.3, metalness: 0.45 }});
     const clampLidMat = new THREE.MeshStandardMaterial({{ color: 0x2563eb, roughness: 0.35, metalness: 0.6 }});
@@ -1405,6 +1513,8 @@ rotate([system_tilt_x, 0, 0])
     const vials = [];
     const vialMaterials = [];
     const planetGearMeshes = [];
+    const idlerGearMeshes = [];
+    const idlerPinMeshes = [];
     const finMeshes = [];
     const lidMeshes = [];
     const ballMeshes = [];
@@ -1414,6 +1524,9 @@ rotate([system_tilt_x, 0, 0])
 
     let currentK = {k_init};
     let currentSunRPM = {sun_rpm_init};
+    let currentZs = 32;
+    let currentZidler = 14;
+    let currentZjar = 16;
     const latestJarNetG = [];
     for (let i = 0; i < nVials; i++) latestJarNetG.push({self.kin.g_force_sun():.1f});
     let animClock = 0.0;
@@ -1552,16 +1665,23 @@ rotate([system_tilt_x, 0, 0])
       vials.push({{ group: vialGroup, gearHolder: gearHolder, angle: angle }});
     }}
 
-    // --- MATHEMATICALLY EXACT GEAR BUILDER & SIZER ---
+    // --- MATHEMATICALLY EXACT GEAR BUILDER & SIZER WITH REVERSING IDLERS ---
     function rebuildGears(k) {{
       const kAbs = Math.abs(k);
-      const Z_p = 20;
-      const Z_s = Math.round(kAbs * Z_p);
+      const Z_jar = 16;
+      const Z_s = Math.round(kAbs * Z_jar);
+      const Z_idler = 14;
+      currentZs = Z_s;
+      currentZidler = Z_idler;
+      currentZjar = Z_jar;
 
-      // Exact pitch radii satisfying r_sun + r_planet = R_s
-      const r_planet = R_s * (Z_p / (Z_s + Z_p));
-      const r_sun = R_s * (Z_s / (Z_s + Z_p));
-      const m = (2.0 * R_s) / (Z_s + Z_p);
+      // Exact pitch radii satisfying r_sun + 2 * r_idler + r_jar = R_s
+      const Z_total = Z_s + 2 * Z_idler + Z_jar;
+      const m = (2.0 * R_s) / Z_total;
+      const r_sun = (m * Z_s) / 2.0;
+      const r_idler = (m * Z_idler) / 2.0;
+      const r_jar = (m * Z_jar) / 2.0;
+      const r_idler_center = r_sun + r_idler;
       const toothHeight = 1.8 * m;
 
       // 1. Rebuild Stationary Central Sun Gear anchored to rootAssembly (Base Frame)
@@ -1576,27 +1696,65 @@ rotate([system_tilt_x, 0, 0])
       rootAssembly.add(sunGearMesh); // ANCHORED TO STATIONARY BASE, NEVER ROTATES!
       addBlackEdges(sunGearMesh, 30);
 
-      // 2. Rebuild All Coplanar Planet Gears at exact gearY
+      // 2. Rebuild 4 Intermediate Reversing Idler Gears & Mounting Pins on Carrier Disc
+      idlerGearMeshes.forEach(mesh => {{
+        sunAssembly.remove(mesh);
+        mesh.geometry.dispose();
+      }});
+      idlerGearMeshes.length = 0;
+
+      idlerPinMeshes.forEach(pin => {{
+        sunAssembly.remove(pin);
+        pin.geometry.dispose();
+      }});
+      idlerPinMeshes.length = 0;
+
+      for (let i = 0; i < nVials; i++) {{
+        const angle = vials[i].angle;
+        // Intermediate idler gear
+        const idlerGeom = createGearGeometry(r_idler, gearThickness, Z_idler, toothHeight, 1.2);
+        const idlerMesh = new THREE.Mesh(idlerGeom, idlerGearMat);
+        idlerMesh.rotation.x = Math.PI / 2;
+        idlerMesh.position.set(r_idler_center * Math.cos(angle), gearY, r_idler_center * Math.sin(angle));
+        idlerMesh.rotation.z = Math.PI / Z_idler;
+        sunAssembly.add(idlerMesh);
+        addBlackEdges(idlerMesh, 30);
+        idlerGearMeshes.push(idlerMesh);
+
+        // Mounting pin connecting idler gear to carrier disc
+        const pinGeom = new THREE.CylinderGeometry(0.85, 0.85, vialBaseY - gearY + 0.5, 16);
+        const pinMesh = new THREE.Mesh(pinGeom, shaftMat);
+        pinMesh.position.set(r_idler_center * Math.cos(angle), gearY + (vialBaseY - gearY) / 2, r_idler_center * Math.sin(angle));
+        sunAssembly.add(pinMesh);
+        addBlackEdges(pinMesh);
+        idlerPinMeshes.push(pinMesh);
+      }}
+
+      // 3. Rebuild 4 Planet Jar Gears on Jar Spindles
       for (let i = 0; i < nVials; i++) {{
         if (planetGearMeshes[i]) {{
           vials[i].gearHolder.remove(planetGearMeshes[i]);
           planetGearMeshes[i].geometry.dispose();
         }}
-        const pGeom = createGearGeometry(r_planet, gearThickness, Z_p, toothHeight, 1.4);
+        const pGeom = createGearGeometry(r_jar, gearThickness, Z_jar, toothHeight, 1.2);
         const pGear = new THREE.Mesh(pGeom, planetGearMat);
         pGear.rotation.x = Math.PI / 2;
         pGear.position.set(0, 0, 0);
-        // Phase align tooth space facing sun gear
-        pGear.rotation.z = Math.PI / Z_p;
+        pGear.rotation.z = Math.PI / Z_jar;
         vials[i].gearHolder.add(pGear);
         addBlackEdges(pGear, 30);
         planetGearMeshes[i] = pGear;
       }}
 
-      // Update Pitch Displays
-      document.getElementById('disp-sun-teeth').textContent = `${{Z_s}} T (Ø ${{(2 * r_sun).toFixed(1)}})`;
-      document.getElementById('disp-planet-teeth').textContent = `${{Z_p}} T (Ø ${{(2 * r_planet).toFixed(1)}})`;
-      document.getElementById('disp-pitch-sum').textContent = `${{(r_sun + r_planet).toFixed(1)}} = R_sun (Exact)`;
+      // Update Pitch & Teeth Displays
+      const elSunT = document.getElementById('disp-sun-teeth');
+      if (elSunT) elSunT.textContent = `${{Z_s}} T (Ø ${{(2 * r_sun).toFixed(1)}})`;
+      const elIdlerT = document.getElementById('disp-idler-teeth');
+      if (elIdlerT) elIdlerT.textContent = `${{Z_idler}} T (Ø ${{(2 * r_idler).toFixed(1)}})`;
+      const elPlanetT = document.getElementById('disp-planet-teeth');
+      if (elPlanetT) elPlanetT.textContent = `${{Z_jar}} T (Ø ${{(2 * r_jar).toFixed(1)}})`;
+      const elPitchSum = document.getElementById('disp-pitch-sum');
+      if (elPitchSum) elPitchSum.textContent = `${{(r_sun + 2 * r_idler + r_jar).toFixed(1)}} = R_sun (Exact)`;
     }}
 
     // --- TELEMETRY & DYNAMICS CONTROLLER ---
@@ -1634,10 +1792,10 @@ rotate([system_tilt_x, 0, 0])
         regimeEl.style.color = "#dc2626";
       }}
 
-      // Update Individual Jar Cards
+      // Update Individual Jar Cards (OPPOSITE ROTATION DIRECTION!)
       const speedRatio = Math.abs(k);
       const jarRelRPM = speedRatio * sunRPM;
-      const jarAbsRPM = sunRPM * (1.0 + speedRatio);
+      const jarAbsRPM = sunRPM * Math.abs(speedRatio - 1.0);
       const omega_vial = (jarRelRPM * 2 * Math.PI) / 60.0;
       const gWall = (Math.pow(omega_vial, 2) * {self.geom.vial_radius_m}) / 9.80665;
       const vTip = Math.abs(omega_vial * {self.geom.vial_radius_m});
@@ -1648,8 +1806,8 @@ rotate([system_tilt_x, 0, 0])
         const gEl = document.getElementById(`stat-jar-g-${{i}}`);
         const vEl = document.getElementById(`stat-jar-vtip-${{i}}`);
 
-        if (relEl) relEl.textContent = `+${{Math.round(jarRelRPM)}} RPM`;
-        if (absEl) absEl.textContent = `+${{Math.round(jarAbsRPM)}} RPM`;
+        if (relEl) relEl.textContent = `-${{Math.round(jarRelRPM)}} RPM`;
+        if (absEl) absEl.textContent = `-${{Math.round(jarAbsRPM)}} RPM (Opposite)`;
         if (gEl) gEl.textContent = `${{gWall.toFixed(1)}} G`;
         if (vEl) vEl.textContent = `${{vTip.toFixed(2)}} m/s`;
 
@@ -1661,7 +1819,7 @@ rotate([system_tilt_x, 0, 0])
         if (hudG) hudG.textContent = `${{gSun.toFixed(1)}} G`;
         if (popG) popG.textContent = `${{gSun.toFixed(1)}} G`;
         if (popAccel) popAccel.textContent = `${{(gSun * 9.80665).toFixed(1)}} m/s²`;
-        if (popRpm) popRpm.textContent = `+${{Math.round(jarRelRPM)}} RPM`;
+        if (popRpm) popRpm.textContent = `-${{Math.round(jarRelRPM)}} RPM (Opposite)`;
 
         // Scale Red G-Force arrow with G-force magnitude
         if (gForceArrows[i]) {{
@@ -1713,9 +1871,22 @@ rotate([system_tilt_x, 0, 0])
     document.getElementById('chk-disc').addEventListener('change', (e) => {{
       sunDiscMesh.visible = e.target.checked;
     }});
+    const chkSunDot = document.getElementById('chk-sun-dot');
+    if (chkSunDot) {{
+      chkSunDot.addEventListener('change', (e) => {{
+        sunDotGroup.visible = e.target.checked;
+      }});
+    }}
     document.getElementById('chk-sungear').addEventListener('change', (e) => {{
       if (sunGearMesh) sunGearMesh.visible = e.target.checked;
     }});
+    const chkAllIdlers = document.getElementById('chk-all-idlers');
+    if (chkAllIdlers) {{
+      chkAllIdlers.addEventListener('change', (e) => {{
+        idlerGearMeshes.forEach(m => m.visible = e.target.checked);
+        idlerPinMeshes.forEach(p => p.visible = e.target.checked);
+      }});
+    }}
     document.getElementById('chk-shaft').addEventListener('change', (e) => {{
       shaftGroup.visible = e.target.checked;
     }});
@@ -2130,56 +2301,57 @@ rotate([system_tilt_x, 0, 0])
         }}
       }}
 
-      update(dt, sunRPM, k, tiltDeg, driveDir, isRotating) {{
+      update(dt, sunRPM, k, tiltDeg, driveDir, isRotating, a_radial, a_tangent, netG, vialSpinSpeed) {{
         if (this.isPaused) return;
 
         const effectiveDt = dt * this.simSpeed;
         const subSteps = 6;
         const subDt = effectiveDt / subSteps;
 
-        // Physical kinematics for real engineering telemetry
-        const omegaSunReal = isRotating ? (sunRPM * 2 * Math.PI / 60.0) : 0.0;
-        const omegaJarReal = isRotating ? (k * omegaSunReal * driveDir) : 0.0;
-
         // Visual DEM motion scaling (simulates ~1.8s per rev high-speed strobe capture)
+        const omegaSunReal = isRotating ? (sunRPM * 2 * Math.PI / 60.0) : 0.0;
         const visScale = 0.048;
-        const omegaSunVis = omegaSunReal * visScale;
-        const omegaJarVis = omegaJarReal * visScale;
+        const omegaSunVis = omegaSunReal * visScale * driveDir;
 
-        // Outward Carrier Centrifugal Acceleration
-        // Outward direction is down (+Y, 0.5 * PI)
-        const outwardAngle = 0.5 * Math.PI;
-        const a_carr_mag = Math.pow(Math.max(1.0, sunRPM / 450.0), 1.8) * 1650.0;
-        const a_carr_x = 0;
-        const a_carr_y = isRotating ? a_carr_mag : 400.0; // residual settling gravity when stopped
+        // REVERSING GEAR: Jar drum rotates in OPPOSITE direction (Clockwise in 2D view)!
+        // When carrier turns CCW, the reversing intermediate idler gear causes the jar drum to rotate CW.
+        const speedRatio = Math.abs(k);
+        const omegaJarVis = isRotating ? (speedRatio * Math.abs(omegaSunVis)) : 0.0;
 
-        // Earth Gravity coupled with X-tilt (0° vertical to 90° horizontal)
-        const tiltRad = (tiltDeg * Math.PI) / 180.0;
-        const gInPlane = Math.sin(tiltRad) * 650.0;
-        const gravAngle = outwardAngle - this.carrierAngle;
-        const a_grav_x = isRotating ? gInPlane * Math.cos(gravAngle) : 0;
-        const a_grav_y = isRotating ? gInPlane * Math.sin(gravAngle) : (tiltRad > 0 ? gInPlane : 0);
+        // Map real-time physics vectors (m/s²) directly into canvas simulation units (px/s²)
+        // 1 G (9.80665 m/s²) = 45.0 px/s²
+        const scaleAcc = 45.0 / 9.80665;
+        let a_bg_x = (a_tangent !== undefined ? a_tangent : 0) * scaleAcc;
+        let a_bg_y = (a_radial !== undefined ? a_radial : (isRotating ? (Math.pow(sunRPM / 450.0, 2) * 355.0) : 0)) * scaleAcc;
 
-        const a_bg_x = a_carr_x + a_grav_x;
-        const a_bg_y = a_carr_y + a_grav_y;
+        if (!isRotating) {{
+          if (tiltDeg === 0) {{
+            a_bg_x = 0;
+            a_bg_y = 60.0; // gentle bottom wall settling
+          }} else {{
+            a_bg_x = (a_tangent || 0) * scaleAcc;
+            a_bg_y = (a_radial || 0) * scaleAcc;
+          }}
+        }}
 
-        this.latestNetAngle = Math.atan2(a_bg_y, Math.abs(a_bg_x) > 0.001 ? a_bg_x : 0.0001);
-        this.latestNetG = isRotating ? (Math.pow(sunRPM / 450.0, 2) * 36.2) : 1.0;
+        // Live G-force angle & magnitude perfectly matching 3D Red Arrow
+        this.latestNetAngle = Math.atan2(a_bg_y, Math.abs(a_bg_x) > 0.001 ? a_bg_x : (a_bg_y >= 0 ? 0.0001 : -0.0001));
+        this.latestNetG = netG !== undefined ? netG : (isRotating ? (Math.pow(sunRPM / 450.0, 2) * 36.2) : 1.0);
 
         for (let step = 0; step < subSteps; step++) {{
-          this.jarAngle += omegaJarVis * subDt;
+          this.jarAngle += omegaJarVis * subDt; // Wall turns clockwise!
           this.carrierAngle += omegaSunVis * subDt;
 
-          const v_wall_t = omegaJarVis * this.R_jar;
+          const v_wall_t = omegaJarVis * this.R_jar; // Positive tangential wall speed (CW)
 
           // 1. Update Grinding Balls
           const nB = this.balls.length;
           for (let i = 0; i < nB; i++) {{
             const b = this.balls[i];
 
-            // Coriolis acceleration in rotating frame
-            const a_cor_x = 2.0 * omegaSunVis * b.vy * 1.8;
-            const a_cor_y = -2.0 * omegaSunVis * b.vx * 1.8;
+            // True Coriolis acceleration in rotating frame
+            const a_cor_x = -2.0 * omegaSunVis * b.vy * 1.5;
+            const a_cor_y = +2.0 * omegaSunVis * b.vx * 1.5;
 
             b.vx += (a_bg_x + a_cor_x) * subDt;
             b.vy += (a_bg_y + a_cor_y) * subDt;
@@ -2387,11 +2559,12 @@ rotate([system_tilt_x, 0, 0])
         if (elDose) elDose.textContent = `${{(this.cumEnergy_J / (this.powderMass_g * 1e-3) / 3600.0).toFixed(2)}} Wh/kg`;
 
         const elHudSpin = document.getElementById('dem-hud-spin');
-        if (elHudSpin) elHudSpin.textContent = `ω: -${{Math.round(Math.abs(k) * sunRPM)}} RPM`;
+        if (elHudSpin) elHudSpin.textContent = `ω: -${{Math.round(Math.abs(k) * sunRPM)}} RPM (Opposite)`;
 
         const elHudG = document.getElementById('dem-hud-gforce');
-        if (elHudG && latestJarNetG && latestJarNetG[0] !== undefined) {{
-          elHudG.textContent = `${{latestJarNetG[0].toFixed(1)}} G Net`;
+        if (elHudG) {{
+          const gVal = this.latestNetG !== undefined ? this.latestNetG : (latestJarNetG && latestJarNetG[0] !== undefined ? latestJarNetG[0] : 36.2);
+          elHudG.textContent = `${{gVal.toFixed(1)}} G Net`;
         }}
 
         const elHudRegime = document.getElementById('dem-hud-regime');
@@ -2403,42 +2576,76 @@ rotate([system_tilt_x, 0, 0])
       }}
 
       drawForcesCompass(ctx) {{
-        const compX = this.width - 34;
-        const compY = this.height - 34;
-        const compR = 24;
+        const compX = this.width - 42;
+        const compY = this.height - 42;
+        const compR = 28;
 
         ctx.save();
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(compX, compY, compR, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // Net G-force arrow (Red)
-        const fx = Math.cos(this.latestNetAngle) * 16;
-        const fy = Math.sin(this.latestNetAngle) * 16;
+        // Compass crosshairs
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(compX - compR + 4, compY); ctx.lineTo(compX + compR - 4, compY);
+        ctx.moveTo(compX, compY - compR + 4); ctx.lineTo(compX, compY + compR - 4);
+        ctx.stroke();
+
+        // Direction labels
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = 'bold 8px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('OUT', compX, compY + compR - 3);
+        ctx.fillText('IN', compX, compY - compR + 8);
+        ctx.fillText('TAN', compX + compR - 8, compY + 3);
+
+        // Real-Time Net G-force vector arrow (Red)
+        const gMagScale = Math.min(1.0, Math.max(0.35, Math.sqrt((this.latestNetG || 36.2) / 36.2)));
+        const arrowLen = compR * 0.72 * gMagScale;
+        const fx = Math.cos(this.latestNetAngle) * arrowLen;
+        const fy = Math.sin(this.latestNetAngle) * arrowLen;
+
         ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(compX, compY);
         ctx.lineTo(compX + fx, compY + fy);
         ctx.stroke();
+
+        // Arrow head
+        const headAngle = Math.atan2(fy, fx);
+        const headLen = 6.0;
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
-        ctx.arc(compX + fx, compY + fy, 2.5, 0, Math.PI * 2);
+        ctx.moveTo(compX + fx, compY + fy);
+        ctx.lineTo(
+          compX + fx - headLen * Math.cos(headAngle - Math.PI / 6),
+          compY + fy - headLen * Math.sin(headAngle - Math.PI / 6)
+        );
+        ctx.lineTo(
+          compX + fx - headLen * Math.cos(headAngle + Math.PI / 6),
+          compY + fy - headLen * Math.sin(headAngle + Math.PI / 6)
+        );
+        ctx.closePath();
         ctx.fill();
 
-        // Coriolis arrow (Cyan)
-        const cx_cor = -Math.sin(this.latestNetAngle) * 11;
-        const cy_cor = Math.cos(this.latestNetAngle) * 11;
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 1.5;
+        // Center hub dot
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.moveTo(compX, compY);
-        ctx.lineTo(compX + cx_cor, compY + cy_cor);
-        ctx.stroke();
+        ctx.arc(compX, compY, 2.0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // G-force numerical readout badge below arrow
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${{(this.latestNetG || 36.2).toFixed(1)}}G`, compX, compY - 4);
 
         ctx.restore();
       }}
@@ -2775,12 +2982,17 @@ rotate([system_tilt_x, 0, 0])
       // Carrier & Jar Spindle Rotational Kinematics
       const currentOmega = isRotating ? (driveDir * (currentSunRPM / 450.0) * 0.012) : 0.0;
       const speedRatio = Math.abs(currentK);
-      const vialSpinSpeed = speedRatio * currentOmega;
+      // REVERSING GEAR: Jars rotate in the OPPOSITE direction to the sun wheel!
+      const vialSpinSpeed = -speedRatio * currentOmega;
+      const idlerSpinSpeed = -(currentZs / currentZidler) * currentOmega;
 
       if (isRotating) {{
         sunAssembly.rotation.y += currentOmega;
         vials.forEach(v => {{
           v.group.rotation.y += vialSpinSpeed;
+        }});
+        idlerGearMeshes.forEach(m => {{
+          m.rotation.z += idlerSpinSpeed;
         }});
         animClock += 0.025 * Math.max(0.1, currentSunRPM / 450.0) * driveDir;
       }}
@@ -2804,6 +3016,7 @@ rotate([system_tilt_x, 0, 0])
 
       const tiltFraction = currentTiltDeg / 90.0;
       let minNetG = 999, maxNetG = -999;
+      let jar1_a_radial = 0, jar1_a_tangent = 0, jar1_netG = latestJarNetG[0] || 36.2;
 
       // Update instantaneous net G-force, Red Vector Arrows, and Ball Bed Dynamics for each jar
       for (let i = 0; i < nVials; i++) {{
@@ -2824,6 +3037,13 @@ rotate([system_tilt_x, 0, 0])
         latestJarNetG[i] = netG;
         if (netG < minNetG) minNetG = netG;
         if (netG > maxNetG) maxNetG = netG;
+
+        if (i === 0) {{
+          const a_in_carr = a_net_world.clone().applyQuaternion(invSunQuat);
+          jar1_a_radial = a_in_carr.x;
+          jar1_a_tangent = a_in_carr.z;
+          jar1_netG = netG;
+        }}
 
         const a_net_dir_world = a_net_world.clone().normalize();
 
@@ -2987,7 +3207,7 @@ rotate([system_tilt_x, 0, 0])
 
       // Update Jar #1 DEM Particle & Dry Powder Simulation
       if (jar1Sim && isJar1PanelOpen) {{
-        jar1Sim.update(0.016, currentSunRPM, currentK, currentTiltDeg, driveDir, isRotating);
+        jar1Sim.update(0.016, currentSunRPM, currentK, currentTiltDeg, driveDir, isRotating, jar1_a_radial, jar1_a_tangent, jar1_netG, vialSpinSpeed);
         jar1Sim.render();
       }}
 

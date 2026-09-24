@@ -16,13 +16,16 @@ h_vial_total = h_vial + 22.0;
 num_vials = 4;            // Number of vials
 gear_ratio_k = -2.00;     // Ratio omega / Omega
 
-z_planet = 20;            // Planet gear teeth
-z_sun = 40;                  // Sun gear teeth
+z_jar = 16;                  // Planet jar gear teeth
+z_idler = 14;              // Intermediate reversing idler teeth
+z_sun = 32;                  // Sun gear teeth
 
-// Exact pitch radii satisfying: r_sun_pitch + r_planet_pitch = R_sun
-r_planet_pitch = 53.33;
-r_sun_pitch = 106.67;
-gear_module = 5.33;  // Common module for perfect meshing
+// Exact pitch radii satisfying: r_sun_pitch + 2 * r_idler_pitch + r_jar_pitch = R_sun
+r_sun_pitch = 67.37;
+r_idler_pitch = 29.47;
+r_jar_pitch = 33.68;
+r_idler_center = 96.84;
+gear_module = 4.21;  // Common module for perfect meshing
 gear_thick = 16.0;
 
 // Mechanical Layout Elevations (mm)
@@ -38,11 +41,13 @@ shaft_diam = 28.0;
 // --- COLORS ---
 color_steel = [0.90, 0.91, 0.93, 1.0];      // Light Satin Steel
 color_gear_sun = [0.82, 0.65, 0.25, 1.0];   // Machined Bronze Sun Gear
+color_gear_idler = [0.10, 0.55, 0.85, 1.0]; // Reversing Idler Gear (Cyan/Steel)
 color_gear_planet = [0.45, 0.50, 0.58, 1.0];// Alloy Steel Planet Gear
 color_fin = [0.85, 0.88, 0.92, 1.0];        // Cooling Fin Aluminum
 color_lid = [0.15, 0.45, 0.85, 1.0];        // Anodized Blue Clamp Lid
 color_indicator = [0.95, 0.30, 0.15, 1.0];  // Rotational Indicator (Orange-Red)
 color_ball = [0.95, 0.78, 0.25, 1.0];       // Grinding Media
+color_sun_dot = [0.95, 0.20, 0.20, 1.0];    // High-contrast Sun Carrier Dot
 
 // --- MAIN ASSEMBLY ---
 module PlanetaryBallMillAssembly() {
@@ -56,14 +61,23 @@ module PlanetaryBallMillAssembly() {
     // 3. Central Drive Shaft & Sun Carrier Disc
     CentralCarrierUnit();
 
-    // 4. Planetary Vials with meshing Planet Gears, Cooling Fins & Indicators
+    // 4. Planetary Vials with Reversing Idler Gears & Planet Jar Gears
     for (i = [0 : num_vials - 1]) {
         angle = i * (360.0 / num_vials);
         rotate([0, 0, angle]) {
-            // Planet Gear at exact coplanar gear_z meshing with sun gear
+            // Intermediate Reversing Idler Gear meshing with Sun Gear and Jar Gear
+            translate([r_idler_center, 0, gear_z])
+                rotate([0, 0, (180.0 / z_idler)])
+                    MechanicalSpurGear(r = r_idler_pitch, teeth = z_idler, thickness = gear_thick, bore = 10, col = color_gear_idler);
+
+            // Idler Mounting Pin from carrier disc down to gear
+            translate([r_idler_center, 0, gear_z])
+                cylinder(r = 5.0, h = vial_z - gear_z);
+
+            // Planet Jar Gear at R_sun meshing with Idler Gear
             translate([R_sun, 0, gear_z])
-                rotate([0, 0, (180.0 / z_planet)])
-                    MechanicalSpurGear(r = r_planet_pitch, teeth = z_planet, thickness = gear_thick, bore = 14, col = color_gear_planet);
+                rotate([0, 0, (180.0 / z_jar)])
+                    MechanicalSpurGear(r = r_jar_pitch, teeth = z_jar, thickness = gear_thick, bore = 14, col = color_gear_planet);
 
             // Spindle shaft connecting gear through carrier disc
             translate([R_sun, 0, gear_z])
@@ -120,6 +134,11 @@ module CentralCarrierUnit() {
         translate([0, 0, gear_z])
             cylinder(r = shaft_diam / 2, h = vial_z + 30);
     }
+
+    // High-visibility rotation indicator dot on sun carrier disc
+    translate([disc_radius * 0.85 * cos(45), disc_radius * 0.85 * sin(45), disc_z + disc_thick])
+        color(color_sun_dot)
+            cylinder(r = 14.0, h = 3.5);
 
     // Motor Shaft Rotation Direction Indicator (Omega Arrow)
     color(color_indicator) {
