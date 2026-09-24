@@ -119,6 +119,66 @@
     }
     .jar-stat-item b { color: #0f172a; }
 
+    /* Floating Jar G-Force HUD Badges / Tooltips */
+    .jar-hud-badge {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f172a;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+      pointer-events: auto;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .jar-hud-badge:hover, .jar-hud-badge.highlighted {
+      background: #ffffff;
+      border-color: #ef4444;
+      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.28);
+    }
+    .hud-badge-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #ef4444;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.85); display: inline-block;
+    }
+    .hud-badge-name {
+      color: #334155; font-size: 10.5px;
+    }
+    .hud-badge-g {
+      color: #dc2626; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .jar-hud-popover {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(8px);
+      color: #f8fafc;
+      padding: 8px 11px;
+      border-radius: 8px;
+      font-size: 10.5px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      min-width: 185px;
+      line-height: 1.55;
+      pointer-events: none;
+      z-index: 25;
+    }
+    .jar-hud-badge:hover .jar-hud-popover {
+      display: block;
+    }
+
     /* Bottom Dock Toolbar */
     #bottom-ctrls {
       position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 10;
@@ -158,6 +218,10 @@
           </div>
 
           <div class="tree-indent" id="tree-root-children">
+            <div class="tree-node" style="padding:2px 6px; font-size:11px; color:#475569;">
+              <span class="node-icon">📐</span>
+              <span>X-Tilt: <b id="tree-tilt-val" style="color:#2563eb;">0° (Vertical)</b></span>
+            </div>
             <div class="tree-node">
               <div class="tree-row">
                 <input type="checkbox" class="tree-checkbox" id="chk-base" checked>
@@ -214,6 +278,27 @@
                 <input type="checkbox" class="tree-checkbox" id="chk-all-balls" checked>
                 <span class="node-icon">⚪</span>
                 <span>Grinding Media (Balls)</span>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row">
+                <input type="checkbox" class="tree-checkbox" id="chk-gforce-arrows" checked>
+                <span class="node-icon">🔴</span>
+                <span>G-Force Direction Arrows (Red)</span>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row">
+                <input type="checkbox" class="tree-checkbox" id="chk-ball-bed" checked>
+                <span class="node-icon">🟡</span>
+                <span>Dynamic Ball Charge Bed (Gravity Well)</span>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row">
+                <input type="checkbox" class="tree-checkbox" id="chk-tooltips" checked>
+                <span class="node-icon">🏷️</span>
+                <span>Jar G-Force Tooltip Badges</span>
               </div>
             </div>
 
@@ -304,6 +389,22 @@
           </div>
         </div>
 
+        <!-- System Orientation / X-Axis Tilt Control -->
+        <div class="section-title">System Tilt Orientation (X-Axis)</div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:11.5px;">
+            <span>Tilt Angle:</span>
+            <strong id="disp-tilt-val" style="color:#2563eb; font-weight:800;">0° (Vertical Jars)</strong>
+          </div>
+          <input type="range" class="rpm-slider-ctrl" id="slider-tilt" min="0" max="90" step="1" value="0" style="margin:4px 0;">
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
+            <button class="ctrl-btn active" data-tilt="0">0° (Vert)</button>
+            <button class="ctrl-btn" data-tilt="30">30°</button>
+            <button class="ctrl-btn" data-tilt="45">45°</button>
+            <button class="ctrl-btn" data-tilt="90">90° (Horiz)</button>
+          </div>
+        </div>
+
         <div class="section-title">Individual Jar Spindles Monitor (4 Jars)</div>
         <div id="jar-cards-container">
           
@@ -385,8 +486,75 @@
       <button class="dock-btn" id="btn-toggle-dir">Reverse Direction (↺ CCW)</button>
       <button class="dock-btn" id="btn-toggle-xray">X-Ray Vials</button>
       <button class="dock-btn active" id="btn-toggle-edges">Black Edges</button>
+      <button class="dock-btn active" id="btn-toggle-gforce">🔴 G-Force Arrows</button>
+      <button class="dock-btn active" id="btn-toggle-tooltips">🏷️ Tooltips</button>
+      <button class="dock-btn" id="btn-toggle-tilt">🔄 Tilt: 0° Vert</button>
       <button class="dock-btn" id="btn-reset-cam">Reset View</button>
     </div>
+
+    <!-- Floating Jar G-Force HUD Badges / Tooltips -->
+    <div id="jar-hud-container" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:11;">
+      
+      <div class="jar-hud-badge" id="hud-jar-0" data-jar="0">
+        <span class="hud-badge-dot"></span>
+        <span class="hud-badge-name">Jar #1</span>
+        <span class="hud-badge-g" id="hud-g-val-0">36.2 G</span>
+        <div class="jar-hud-popover" id="hud-popover-0">
+          <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">🧪 Jar #1 G-Force Telemetry</div>
+          <div>• Net G-Force: <b id="pop-g-0" style="color:#ef4444;">36.2 G</b></div>
+          <div>• Linear Accel: <b id="pop-accel-0">355.3 m/s²</b></div>
+          <div>• Direction: <b id="pop-dir-0" style="color:#ef4444;">Red Arrow (Centrifugal + Gravity)</b></div>
+          <div>• Media Bed: <b id="pop-bed-0" style="color:#f59e0b;">Dynamic Gravitational Well</b></div>
+          <div>• Spindle Spin: <b id="pop-rpm-0">+900 RPM</b></div>
+        </div>
+      </div>
+      
+      <div class="jar-hud-badge" id="hud-jar-1" data-jar="1">
+        <span class="hud-badge-dot"></span>
+        <span class="hud-badge-name">Jar #2</span>
+        <span class="hud-badge-g" id="hud-g-val-1">36.2 G</span>
+        <div class="jar-hud-popover" id="hud-popover-1">
+          <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">🧪 Jar #2 G-Force Telemetry</div>
+          <div>• Net G-Force: <b id="pop-g-1" style="color:#ef4444;">36.2 G</b></div>
+          <div>• Linear Accel: <b id="pop-accel-1">355.3 m/s²</b></div>
+          <div>• Direction: <b id="pop-dir-1" style="color:#ef4444;">Red Arrow (Centrifugal + Gravity)</b></div>
+          <div>• Media Bed: <b id="pop-bed-1" style="color:#f59e0b;">Dynamic Gravitational Well</b></div>
+          <div>• Spindle Spin: <b id="pop-rpm-1">+900 RPM</b></div>
+        </div>
+      </div>
+      
+      <div class="jar-hud-badge" id="hud-jar-2" data-jar="2">
+        <span class="hud-badge-dot"></span>
+        <span class="hud-badge-name">Jar #3</span>
+        <span class="hud-badge-g" id="hud-g-val-2">36.2 G</span>
+        <div class="jar-hud-popover" id="hud-popover-2">
+          <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">🧪 Jar #3 G-Force Telemetry</div>
+          <div>• Net G-Force: <b id="pop-g-2" style="color:#ef4444;">36.2 G</b></div>
+          <div>• Linear Accel: <b id="pop-accel-2">355.3 m/s²</b></div>
+          <div>• Direction: <b id="pop-dir-2" style="color:#ef4444;">Red Arrow (Centrifugal + Gravity)</b></div>
+          <div>• Media Bed: <b id="pop-bed-2" style="color:#f59e0b;">Dynamic Gravitational Well</b></div>
+          <div>• Spindle Spin: <b id="pop-rpm-2">+900 RPM</b></div>
+        </div>
+      </div>
+      
+      <div class="jar-hud-badge" id="hud-jar-3" data-jar="3">
+        <span class="hud-badge-dot"></span>
+        <span class="hud-badge-name">Jar #4</span>
+        <span class="hud-badge-g" id="hud-g-val-3">36.2 G</span>
+        <div class="jar-hud-popover" id="hud-popover-3">
+          <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">🧪 Jar #4 G-Force Telemetry</div>
+          <div>• Net G-Force: <b id="pop-g-3" style="color:#ef4444;">36.2 G</b></div>
+          <div>• Linear Accel: <b id="pop-accel-3">355.3 m/s²</b></div>
+          <div>• Direction: <b id="pop-dir-3" style="color:#ef4444;">Red Arrow (Centrifugal + Gravity)</b></div>
+          <div>• Media Bed: <b id="pop-bed-3" style="color:#f59e0b;">Dynamic Gravitational Well</b></div>
+          <div>• Spindle Spin: <b id="pop-rpm-3">+900 RPM</b></div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- Cursor Follow Tooltip -->
+    <div id="cursor-gforce-tooltip" style="position:absolute; display:none; pointer-events:none; z-index:20; background:rgba(15,23,42,0.92); color:#ffffff; padding:5px 9px; border-radius:6px; font-size:11px; font-weight:600; box-shadow:0 4px 14px rgba(0,0,0,0.25); transform:translate(12px, 12px);"></div>
 
     <div id="canvas-3d"></div>
   </div>
@@ -559,6 +727,9 @@
     const finMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3, metalness: 0.45 });
     const clampLidMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.35, metalness: 0.6 });
     const jarIndicatorMat = new THREE.MeshStandardMaterial({ color: 0xea580c, roughness: 0.25, metalness: 0.4 });
+    const gForceArrowMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.25, metalness: 0.5 });
+    const gravPointMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309, emissiveIntensity: 0.4, roughness: 0.2, metalness: 0.8 });
+    const bedBallMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.2, metalness: 0.85 });
 
     // 3. Planetary Vials & Spindle Assemblies
     const vials = [];
@@ -567,10 +738,15 @@
     const finMeshes = [];
     const lidMeshes = [];
     const ballMeshes = [];
+    const ballBedGroups = [];
+    const gForceArrows = [];
     let sunGearMesh = null;
 
     let currentK = -2.0;
     let currentSunRPM = 450.0;
+    const latestJarNetG = [];
+    for (let i = 0; i < nVials; i++) latestJarNetG.push(36.2);
+    let animClock = 0.0;
 
     for (let i = 0; i < nVials; i++) {
       const angle = (i * 2 * Math.PI) / nVials;
@@ -639,15 +815,63 @@
       vialGroup.add(lidGroup);
       lidMeshes.push(lidGroup);
 
-      // Grinding Balls inside
-      const ballMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.2, metalness: 0.85 });
-      const bGeom = new THREE.SphereGeometry(1.1, 16, 16);
-      for (let b = 0; b < 6; b++) {
-        const bMesh = new THREE.Mesh(bGeom, ballMat);
-        bMesh.position.set((Math.random() - 0.5) * r_v * 1.2, vialBaseY + 2.0 + b * 1.5, (Math.random() - 0.5) * r_v * 1.2);
-        vialGroup.add(bMesh);
+      // Dynamic Ball Charge Bed & Gravity Point Indicator inside vial
+      const ballBedGroup = new THREE.Group();
+      ballBedGroups.push(ballBedGroup);
+
+      // Gravitational Point Indicator (Glowing radiant core sphere representing media bed center)
+      const gravGeom = new THREE.SphereGeometry(1.5, 20, 20);
+      const gravMesh = new THREE.Mesh(gravGeom, gravPointMat);
+      gravMesh.position.set(0, 1.5, 0);
+      ballBedGroup.add(gravMesh);
+      addBlackEdges(gravMesh);
+
+      // Grinding Media Balls clustered compactly around the gravity center
+      const bGeom = new THREE.SphereGeometry(1.05, 16, 16);
+      const bedOffsets = [
+        [-1.3, 0.9, -0.6], [1.3, 0.9, -0.6], [-0.8, 0.9, 1.1], [0.8, 0.9, 1.1],
+        [-1.0, 2.4, 0.4], [1.0, 2.4, 0.4], [0.0, 2.5, -1.0], [0.0, 3.1, 0.2]
+      ];
+      bedOffsets.forEach(pt => {
+        const bMesh = new THREE.Mesh(bGeom, bedBallMat);
+        bMesh.position.set(pt[0], pt[1], pt[2]);
+        bMesh.userData = { baseOffset: [pt[0], pt[1], pt[2]], jarIdx: i };
+        ballBedGroup.add(bMesh);
+        addBlackEdges(bMesh);
         ballMeshes.push(bMesh);
-      }
+      });
+
+      // Gravity bed base disc
+      const bedBaseGeom = new THREE.CylinderGeometry(2.3, 2.3, 0.35, 16);
+      const bedBaseMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.35, metalness: 0.6 });
+      const bedBaseMesh = new THREE.Mesh(bedBaseGeom, bedBaseMat);
+      bedBaseMesh.position.set(0, 0.18, 0);
+      ballBedGroup.add(bedBaseMesh);
+      addBlackEdges(bedBaseMesh);
+
+      vialGroup.add(ballBedGroup);
+
+      // Separate Red Arrow for Net G-Force & Ball Movement Direction
+      const gArrowGroup = new THREE.Group();
+      const arrowShaftLength = r_v + 5.5;
+      const gShaftGeom = new THREE.CylinderGeometry(0.55, 0.55, arrowShaftLength, 16);
+      const gShaftMesh = new THREE.Mesh(gShaftGeom, gForceArrowMat);
+      gShaftMesh.position.set(0, arrowShaftLength / 2, 0);
+      gArrowGroup.add(gShaftMesh);
+      addBlackEdges(gShaftMesh);
+
+      const gHeadGeom = new THREE.ConeGeometry(1.35, 3.2, 16);
+      const gHeadMesh = new THREE.Mesh(gHeadGeom, gForceArrowMat);
+      gHeadMesh.position.set(0, arrowShaftLength + 1.6, 0);
+      gArrowGroup.add(gHeadMesh);
+      addBlackEdges(gHeadMesh);
+
+      // Orient arrow outward from sun center with slight 1.6 deg downward gravity tilt
+      const dirVec = new THREE.Vector3(Math.cos(angle), -0.028, Math.sin(angle)).normalize();
+      gArrowGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirVec);
+      gArrowGroup.position.set(R_s * Math.cos(angle), vialBaseY + h_v * 0.5, R_s * Math.sin(angle));
+      sunAssembly.add(gArrowGroup);
+      gForceArrows.push(gArrowGroup);
 
       // Group holding the planet gear at gearY
       const gearHolder = new THREE.Group();
@@ -758,6 +982,22 @@
         if (absEl) absEl.textContent = `+${Math.round(jarAbsRPM)} RPM`;
         if (gEl) gEl.textContent = `${gWall.toFixed(1)} G`;
         if (vEl) vEl.textContent = `${vTip.toFixed(2)} m/s`;
+
+        // Update live HUD tooltip badges and popovers
+        const hudG = document.getElementById(`hud-g-val-${i}`);
+        const popG = document.getElementById(`pop-g-${i}`);
+        const popAccel = document.getElementById(`pop-accel-${i}`);
+        const popRpm = document.getElementById(`pop-rpm-${i}`);
+        if (hudG) hudG.textContent = `${gSun.toFixed(1)} G`;
+        if (popG) popG.textContent = `${gSun.toFixed(1)} G`;
+        if (popAccel) popAccel.textContent = `${(gSun * 9.80665).toFixed(1)} m/s²`;
+        if (popRpm) popRpm.textContent = `+${Math.round(jarRelRPM)} RPM`;
+
+        // Scale Red G-Force arrow with G-force magnitude
+        if (gForceArrows[i]) {
+          const gScale = Math.min(1.4, Math.max(0.65, Math.sqrt(gSun / 36.2)));
+          gForceArrows[i].scale.set(1.0, gScale, 1.0);
+        }
       }
     }
 
@@ -821,6 +1061,23 @@
     document.getElementById('chk-all-balls').addEventListener('change', (e) => {
       ballMeshes.forEach(m => m.visible = e.target.checked);
     });
+    document.getElementById('chk-gforce-arrows').addEventListener('change', (e) => {
+      gForceArrows.forEach(a => a.visible = e.target.checked);
+      const btn = document.getElementById('btn-toggle-gforce');
+      if (btn) btn.classList.toggle('active', e.target.checked);
+    });
+    document.getElementById('chk-ball-bed').addEventListener('change', (e) => {
+      ballBedGroups.forEach(g => g.visible = e.target.checked);
+    });
+    document.getElementById('chk-tooltips').addEventListener('change', (e) => {
+      showTooltips = e.target.checked;
+      const btn = document.getElementById('btn-toggle-tooltips');
+      if (btn) btn.classList.toggle('active', showTooltips);
+      if (!showTooltips) {
+        document.querySelectorAll('.jar-hud-badge').forEach(b => b.style.display = 'none');
+        if (cursorTooltip) cursorTooltip.style.display = 'none';
+      }
+    });
 
     // Individual Jar Checkboxes
     for (let i = 0; i < nVials; i++) {
@@ -861,6 +1118,8 @@
     let isRotating = true;
     let isXray = false;
     let showEdges = true;
+    let showGForceArrows = true;
+    let showTooltips = true;
 
     document.getElementById('btn-toggle-rot').addEventListener('click', (e) => {
       isRotating = !isRotating;
@@ -883,9 +1142,34 @@
       edgeLines.forEach(l => l.visible = showEdges);
     });
 
+    const btnToggleGForce = document.getElementById('btn-toggle-gforce');
+    if (btnToggleGForce) {
+      btnToggleGForce.addEventListener('click', (e) => {
+        showGForceArrows = !showGForceArrows;
+        gForceArrows.forEach(a => a.visible = showGForceArrows);
+        e.target.classList.toggle('active', showGForceArrows);
+        const chk = document.getElementById('chk-gforce-arrows');
+        if (chk) chk.checked = showGForceArrows;
+      });
+    }
+
+    const btnToggleTooltips = document.getElementById('btn-toggle-tooltips');
+    if (btnToggleTooltips) {
+      btnToggleTooltips.addEventListener('click', (e) => {
+        showTooltips = !showTooltips;
+        e.target.classList.toggle('active', showTooltips);
+        const chk = document.getElementById('chk-tooltips');
+        if (chk) chk.checked = showTooltips;
+        if (!showTooltips) {
+          document.querySelectorAll('.jar-hud-badge').forEach(b => b.style.display = 'none');
+          if (cursorTooltip) cursorTooltip.style.display = 'none';
+        }
+      });
+    }
+
     document.getElementById('btn-reset-cam').addEventListener('click', () => {
       camera.position.set(40, 48, 62);
-      controls.target.set(0, 5, 0);
+      controls.target.set(0, 5 + rootAssembly.position.y * 0.5, 0);
     });
 
     // Reverse Direction Button
@@ -899,6 +1183,89 @@
       });
     }
 
+    // --- SYSTEM ORIENTATION & TILT (X-AXIS: 0° TO 90° CLOCKWISE) ---
+    let currentTiltDeg = 0.0;
+
+    function setSystemTilt(deg) {
+      deg = Math.max(0, Math.min(90, parseFloat(deg) || 0));
+      currentTiltDeg = deg;
+      const rad = (deg * Math.PI) / 180.0;
+
+      // Clockwise rotation along X-axis
+      rootAssembly.rotation.x = rad;
+
+      // Lift the base so the machine stays cleanly above the ground grid
+      const R_base = R_s + r_v + 6.0;
+      rootAssembly.position.y = R_base * Math.sin(rad) * 0.88;
+      controls.target.set(0, 5 + rootAssembly.position.y * 0.5, 0);
+
+      // Update text and controls
+      const label = deg === 0 ? "0° (Vertical Jars)" : deg === 90 ? "90° (Horizontal Jars)" : `${Math.round(deg)}° (Inclined)`;
+      const dispEl = document.getElementById('disp-tilt-val');
+      if (dispEl) dispEl.textContent = label;
+      const treeEl = document.getElementById('tree-tilt-val');
+      if (treeEl) treeEl.textContent = `${Math.round(deg)}° (${deg === 0 ? 'Vertical' : deg === 90 ? 'Horizontal' : 'Inclined'})`;
+      const sliderEl = document.getElementById('slider-tilt');
+      if (sliderEl && parseFloat(sliderEl.value) !== deg) sliderEl.value = deg;
+      const btnDock = document.getElementById('btn-toggle-tilt');
+      if (btnDock) {
+        btnDock.textContent = deg === 90 ? "🔄 Tilt: 90° Horiz" : deg === 0 ? "🔄 Tilt: 0° Vert" : `🔄 Tilt: ${Math.round(deg)}°`;
+        btnDock.classList.toggle('active', deg > 0);
+      }
+      document.querySelectorAll('[data-tilt]').forEach(b => {
+        b.classList.toggle('active', parseFloat(b.getAttribute('data-tilt')) === deg);
+      });
+    }
+
+    // Tilt Slider
+    const sliderTilt = document.getElementById('slider-tilt');
+    if (sliderTilt) {
+      sliderTilt.addEventListener('input', (e) => {
+        setSystemTilt(parseFloat(e.target.value));
+      });
+    }
+
+    // Tilt Preset Buttons
+    document.querySelectorAll('[data-tilt]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const deg = parseFloat(btn.getAttribute('data-tilt'));
+        setSystemTilt(deg);
+      });
+    });
+
+    // Toolbar Tilt Toggle Button (Toggles between 0° and 90°)
+    const btnToggleTilt = document.getElementById('btn-toggle-tilt');
+    if (btnToggleTilt) {
+      btnToggleTilt.addEventListener('click', () => {
+        const targetDeg = currentTiltDeg >= 45 ? 0 : 90;
+        setSystemTilt(targetDeg);
+      });
+    }
+
+    // --- MOUSE RAYCASTING & INTERACTION ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(-999, -999);
+    const cursorTooltip = document.getElementById('cursor-gforce-tooltip');
+
+    container.addEventListener('mousemove', (e) => {
+      const rect = container.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+      if (cursorTooltip && cursorTooltip.style.display !== 'none') {
+        cursorTooltip.style.left = `${e.clientX - rect.left}px`;
+        cursorTooltip.style.top = `${e.clientY - rect.top}px`;
+      }
+    });
+
+    container.addEventListener('mouseleave', () => {
+      mouse.x = -999;
+      mouse.y = -999;
+      if (cursorTooltip) cursorTooltip.style.display = 'none';
+      document.querySelectorAll('.jar-hud-badge').forEach(b => b.classList.remove('highlighted'));
+      document.querySelectorAll('.jar-card').forEach(c => c.style.borderColor = '#e2e8f0');
+    });
+
     window.addEventListener('resize', () => {
       const w = container.clientWidth;
       const h = container.clientHeight;
@@ -910,22 +1277,220 @@
     // --- ANIMATION LOOP ---
     function animate() {
       requestAnimationFrame(animate);
-      if (isRotating) {
-        // Carrier / Sun disk rotation step
-        const currentOmega = driveDir * (currentSunRPM / 450.0) * 0.012;
-        sunAssembly.rotation.y += currentOmega;
 
-        // Planet gears pure rolling kinematics on stationary central sun gear:
-        // As the carrier rotates by dTheta, the planet gear meshing on the stationary sun gear
-        // rolls along the sun gear pitch circle with zero slip at the contact point:
-        // v_contact = v_carrier - omega_rel * r_planet = 0 ==> omega_rel = +(Zs / Zp) * Omega = +|k| * Omega.
-        // Therefore, relative to the carrier disc, the jar spindle rotates in the positive direction:
-        const speedRatio = Math.abs(currentK);
-        const vialSpinSpeed = speedRatio * currentOmega;
+      // Carrier & Jar Spindle Rotational Kinematics
+      const currentOmega = isRotating ? (driveDir * (currentSunRPM / 450.0) * 0.012) : 0.0;
+      const speedRatio = Math.abs(currentK);
+      const vialSpinSpeed = speedRatio * currentOmega;
+
+      if (isRotating) {
+        sunAssembly.rotation.y += currentOmega;
         vials.forEach(v => {
           v.group.rotation.y += vialSpinSpeed;
         });
+        animClock += 0.025 * Math.max(0.1, currentSunRPM / 450.0) * driveDir;
       }
+
+      // Ensure all world transformation matrices are fully up-to-date
+      rootAssembly.updateMatrixWorld(true);
+
+      // Physics Parameters
+      const omega_sun = isRotating ? ((currentSunRPM * 2 * Math.PI) / 60.0) : 0.0;
+      const R_s_m = 0.16; // Carrier radius in meters
+      const a_cf_mag = Math.pow(omega_sun, 2) * R_s_m; // Centrifugal acceleration (m/s²)
+      const g_world = new THREE.Vector3(0, -9.80665, 0); // Earth gravity (m/s²) along world -Y
+
+      // Carrier center and orientation in world space
+      const sunWorldPos = new THREE.Vector3();
+      sunAssembly.getWorldPosition(sunWorldPos);
+      const sunWorldQuat = new THREE.Quaternion();
+      sunAssembly.getWorldQuaternion(sunWorldQuat);
+      const invSunQuat = sunWorldQuat.clone().invert();
+      const carrierNormalW = new THREE.Vector3(0, 1, 0).applyQuaternion(sunWorldQuat).normalize();
+
+      const tiltFraction = currentTiltDeg / 90.0;
+      let minNetG = 999, maxNetG = -999;
+
+      // Update instantaneous net G-force, Red Vector Arrows, and Ball Bed Dynamics for each jar
+      for (let i = 0; i < nVials; i++) {
+        // Jar world position
+        const jarWorldPos = new THREE.Vector3();
+        vials[i].group.getWorldPosition(jarWorldPos);
+
+        // Radial vector from carrier rotation axis to jar center in world space
+        const rVecWorld = new THREE.Vector3().subVectors(jarWorldPos, sunWorldPos);
+        rVecWorld.sub(carrierNormalW.clone().multiplyScalar(rVecWorld.dot(carrierNormalW)));
+        const rLen = rVecWorld.length();
+        const rDirWorld = rLen > 0.0001 ? rVecWorld.clone().normalize() : new THREE.Vector3(1, 0, 0);
+
+        // Instantaneous acceleration vectors (Centrifugal + Earth Gravity)
+        const a_cf_world = rDirWorld.clone().multiplyScalar(a_cf_mag);
+        const a_net_world = new THREE.Vector3().addVectors(a_cf_world, g_world);
+        const netG = a_net_world.length() / 9.80665;
+        latestJarNetG[i] = netG;
+        if (netG < minNetG) minNetG = netG;
+        if (netG > maxNetG) maxNetG = netG;
+
+        const a_net_dir_world = a_net_world.clone().normalize();
+
+        // 1. DYNAMIC RED G-FORCE ARROW (Accurately couples Earth gravity & centrifugal acceleration)
+        if (gForceArrows[i]) {
+          // Transform world direction into sunAssembly coordinate frame
+          const dirInSun = a_net_dir_world.clone().applyQuaternion(invSunQuat);
+          gForceArrows[i].quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirInSun);
+
+          // Dynamic arrow scaling reflecting instantaneous G-force magnitude
+          const gScale = Math.min(1.6, Math.max(0.35, Math.sqrt(netG / 36.2)));
+          gForceArrows[i].scale.set(1.0, gScale, 1.0);
+        }
+
+        // 2. DYNAMIC BALL CHARGE BED & TUMBLING GRINDING BALLS
+        if (ballBedGroups[i]) {
+          const invVialQuat = vials[i].group.getWorldQuaternion(new THREE.Quaternion()).invert();
+          // Net acceleration acting in jar's local reference frame
+          const a_local = a_net_world.clone().applyQuaternion(invVialQuat);
+
+          // Cross-sectional angle where centrifugal + gravity forces press balls against cylinder wall
+          const phi_cross = Math.atan2(a_local.z, a_local.x);
+
+          // Dynamic wall traction & friction drag lead angle (in direction of jar spindle spin)
+          const spinSign = vialSpinSpeed !== 0 ? Math.sign(vialSpinSpeed) : Math.sign(driveDir * currentK);
+          const dragFactor = (isRotating && currentSunRPM > 1)
+            ? spinSign * Math.min(0.35, 0.20 * Math.sqrt(Math.abs(currentSunRPM) / 450.0))
+            : 0.0;
+          const bedAngle = phi_cross - dragFactor;
+
+          // Circumferential position against inner jar cylindrical shell
+          const bedRadius = r_v - 2.5;
+          const bedPosX = bedRadius * Math.cos(bedAngle);
+          const bedPosZ = bedRadius * Math.sin(bedAngle);
+
+          // Axial position along cylinder:
+          // Vertical (0°): sits on bottom plate (vialBaseY + 1.2)
+          // Horizontal (90°): settles along cylindrical belly milling zone (vialBaseY + h_v * 0.5)
+          const bedPosY = (vialBaseY + 1.2) * (1.0 - tiltFraction) + (vialBaseY + h_v * 0.5) * tiltFraction;
+          ballBedGroups[i].position.set(bedPosX, bedPosY, bedPosZ);
+
+          // Smoothly orient bed base disc:
+          // Vertical: base disc flat on bottom plate (normal = +Y)
+          // Horizontal: base disc seating flush against cylindrical shell (normal = inward to jar center)
+          const u_normal_vertical = new THREE.Vector3(0, 1, 0);
+          const u_normal_horizontal = new THREE.Vector3(-Math.cos(bedAngle), 0, -Math.sin(bedAngle));
+          const vY = new THREE.Vector3().addVectors(
+            u_normal_vertical.clone().multiplyScalar(1.0 - tiltFraction),
+            u_normal_horizontal.clone().multiplyScalar(tiltFraction)
+          ).normalize();
+
+          // Tangential axial vector along cylinder length
+          const vZ_target = new THREE.Vector3(0, 1, 0).multiplyScalar(tiltFraction)
+            .add(new THREE.Vector3(Math.sin(bedAngle), 0, -Math.cos(bedAngle)).multiplyScalar(1.0 - tiltFraction));
+          vZ_target.sub(vY.clone().multiplyScalar(vZ_target.dot(vY))).normalize();
+          const vX = new THREE.Vector3().crossVectors(vY, vZ_target).normalize();
+
+          const mOrient = new THREE.Matrix4();
+          mOrient.makeBasis(vX, vY, vZ_target);
+          ballBedGroups[i].quaternion.setFromRotationMatrix(mOrient);
+        }
+
+        // 3. LIVE HUD TOOLTIPS & TELEMETRY BADGES
+        const hudG = document.getElementById(`hud-g-val-${i}`);
+        if (hudG) hudG.textContent = `${netG.toFixed(1)} G`;
+        const popG = document.getElementById(`pop-g-${i}`);
+        if (popG) popG.textContent = `${netG.toFixed(1)} G`;
+        const popAccel = document.getElementById(`pop-accel-${i}`);
+        if (popAccel) popAccel.textContent = `${(netG * 9.80665).toFixed(1)} m/s²`;
+        const popDir = document.getElementById(`pop-dir-${i}`);
+        if (popDir) popDir.textContent = currentTiltDeg > 0 ? "Net Vector (Centrifugal + Earth Gravity)" : "Radial Outward Centrifugal";
+        const popBed = document.getElementById(`pop-bed-${i}`);
+        if (popBed) popBed.textContent = currentTiltDeg >= 75 ? "Horizontal Shell (Gravity-Coupled)" : currentTiltDeg === 0 ? "Bottom Plate (Centrifugal Pinning)" : "Inclined Cylinder Shell";
+      }
+
+      // Active rolling and cascading motion for individual grinding media balls
+      if (isRotating && currentSunRPM > 1) {
+        const rollDelta = vialSpinSpeed * 4.8;
+        ballMeshes.forEach((ball, bIdx) => {
+          // Rolling rotation around ball center
+          ball.rotation.x += rollDelta;
+          ball.rotation.z += rollDelta * 0.65;
+          ball.rotation.y += rollDelta * 0.35;
+
+          // Churning cascade micro-motion inside media charge
+          if (ball.userData && ball.userData.baseOffset) {
+            const bo = ball.userData.baseOffset;
+            const phase = animClock * 6.0 + bIdx * 1.15;
+            const churnMag = 0.22 * Math.min(1.0, currentSunRPM / 200.0);
+            ball.position.x = bo[0] + Math.sin(phase) * churnMag;
+            ball.position.z = bo[2] + Math.cos(phase) * churnMag;
+          }
+        });
+      }
+
+      // Update right-panel G-force summary with live horizontal fluctuation
+      const statGForceVal = document.getElementById('stat-gforce-val');
+      if (statGForceVal) {
+        const omega_sun_nom = (currentSunRPM * 2 * Math.PI) / 60.0;
+        const gSunNom = (Math.pow(omega_sun_nom, 2) * 0.16) / 9.80665;
+        if (currentTiltDeg > 0) {
+          statGForceVal.textContent = `${minNetG.toFixed(1)} – ${maxNetG.toFixed(1)} G (Horiz)`;
+        } else {
+          statGForceVal.textContent = `${gSunNom.toFixed(1)} G`;
+        }
+      }
+
+      // Update Floating Jar G-Force HUD Badges
+      if (showTooltips) {
+        const hudContainer = document.getElementById('jar-hud-container');
+        if (hudContainer) {
+          for (let i = 0; i < nVials; i++) {
+            const badgeEl = document.getElementById(`hud-jar-${i}`);
+            if (badgeEl && vials[i]) {
+              // Calculate true 3D world position of the jar lid regardless of tilt
+              const lidWorldPos = vials[i].group.localToWorld(new THREE.Vector3(0, vialBaseY + h_v + 5.5, 0));
+              lidWorldPos.project(camera);
+              const sx = (lidWorldPos.x * 0.5 + 0.5) * container.clientWidth;
+              const sy = (-(lidWorldPos.y * 0.5) + 0.5) * container.clientHeight;
+              if (lidWorldPos.z < 1.0 && vials[i].group.visible) {
+                badgeEl.style.display = 'flex';
+                badgeEl.style.left = `${sx}px`;
+                badgeEl.style.top = `${sy}px`;
+              } else {
+                badgeEl.style.display = 'none';
+              }
+            }
+          }
+        }
+      }
+
+      // Raycasting for interactive jar hover tooltip
+      if (mouse.x > -100 && showTooltips) {
+        raycaster.setFromCamera(mouse, camera);
+        const jarMeshes = [];
+        vials.forEach((v, idx) => {
+          v.group.traverse(child => {
+            if (child.isMesh) {
+              child.userData = { jarIndex: idx };
+              jarMeshes.push(child);
+            }
+          });
+        });
+        const intersects = raycaster.intersectObjects(jarMeshes, false);
+        if (intersects.length > 0 && intersects[0].object.userData.jarIndex !== undefined) {
+          const idx = intersects[0].object.userData.jarIndex;
+          const jarG = latestJarNetG[idx] || 36.2;
+          if (cursorTooltip) {
+            cursorTooltip.style.display = 'block';
+            const tiltLabel = currentTiltDeg === 90 ? 'Horizontal (Gravity-Coupled)' : currentTiltDeg === 0 ? 'Vertical (Pure Centrifugal)' : 'Inclined';
+            cursorTooltip.innerHTML = `🧪 <b>Jar #${idx + 1}</b> • Net G-Force: <span style="color:#ef4444; font-weight:800;">${jarG.toFixed(1)} G</span> (${tiltLabel})`;
+          }
+          document.querySelectorAll('.jar-hud-badge').forEach((b, i) => b.classList.toggle('highlighted', i === idx));
+          document.querySelectorAll('.jar-card').forEach((c, i) => c.style.borderColor = (i === idx ? '#ef4444' : '#e2e8f0'));
+        } else {
+          if (cursorTooltip) cursorTooltip.style.display = 'none';
+          document.querySelectorAll('.jar-hud-badge').forEach(b => b.classList.remove('highlighted'));
+          document.querySelectorAll('.jar-card').forEach(c => c.style.borderColor = '#e2e8f0');
+        }
+      }
+
       controls.update();
       renderer.render(scene, camera);
     }

@@ -174,12 +174,23 @@ module PlanetaryVialUnit() {
         }
     }
 
-    // Grinding Media inside
+    // Red G-Force Vector Arrow (Shows instantaneous direction of G-Force / Ball Movement)
+    color([0.94, 0.20, 0.20, 1.0]) {
+        translate([r_vial_outer * 0.1, 0, h_vial_total / 2])
+            rotate([0, 90, 0]) {
+                cylinder(r = 3.2, h = r_vial_outer * 1.35);
+                translate([0, 0, r_vial_outer * 1.35])
+                    cylinder(r1 = 6.8, r2 = 0.5, h = 12.0);
+            }
+    }
+
+    // Dynamic Ball Charge Bed clustered at Outward Wall (Gravitational Point)
     color(color_ball) {
-        translate([12, 10, 22]) sphere(r = 5);
-        translate([-14, -8, 26]) sphere(r = 5);
-        translate([6, -14, 30]) sphere(r = 5);
-        translate([-8, 12, 34]) sphere(r = 5);
+        translate([r_vial_inner - 10, 0, 16]) sphere(r = 6.5);
+        translate([r_vial_inner - 12, 10, 18]) sphere(r = 6);
+        translate([r_vial_inner - 12, -10, 18]) sphere(r = 6);
+        translate([r_vial_inner - 14, 0, 30]) sphere(r = 5.5);
+        translate([r_vial_inner - 16, 8, 28]) sphere(r = 5.5);
     }
 }
 
@@ -195,5 +206,7 @@ module BaseMotorHousing() {
     }
 }
 
-// Instantiate
-PlanetaryBallMillAssembly();
+// Instantiate with optional X-axis tilt (0 = vertical jars, 90 = horizontal jars)
+system_tilt_x = 0; // [0: 90] Clockwise tilt along X-axis
+rotate([system_tilt_x, 0, 0])
+    PlanetaryBallMillAssembly();
