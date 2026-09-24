@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "figma": {
+      "url": "https://mcp.figma.com/mcp",
+      "type": "http"
+    },
+    "undermind": {
+      "serverUrl": "https://mcp.undermind.ai/mcp",
+      "oauth": {
+        "clientId": "antigravity"
+      }
+    }
+  }
+}
