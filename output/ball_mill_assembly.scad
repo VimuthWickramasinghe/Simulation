@@ -17,15 +17,15 @@ num_vials = 4;            // Number of vials
 gear_ratio_k = -2.00;     // Ratio omega / Omega
 
 z_jar = 16;                  // Planet jar gear teeth
-z_idler = 14;              // Intermediate reversing idler teeth
+z_idler = 16;              // Intermediate reversing idler teeth
 z_sun = 32;                  // Sun gear teeth
 
 // Exact pitch radii satisfying: r_sun_pitch + 2 * r_idler_pitch + r_jar_pitch = R_sun
-r_sun_pitch = 67.37;
-r_idler_pitch = 29.47;
-r_jar_pitch = 33.68;
-r_idler_center = 96.84;
-gear_module = 4.21;  // Common module for perfect meshing
+r_sun_pitch = 64.00;
+r_idler_pitch = 32.00;
+r_jar_pitch = 32.00;
+r_idler_center = 96.00;
+gear_module = 4.00;  // Common module for perfect meshing
 gear_thick = 16.0;
 
 // Mechanical Layout Elevations (mm)
@@ -76,7 +76,7 @@ module PlanetaryBallMillAssembly() {
 
             // Planet Jar Gear at R_sun meshing with Idler Gear
             translate([R_sun, 0, gear_z])
-                rotate([0, 0, (180.0 / z_jar)])
+                rotate([0, 0, 0])
                     MechanicalSpurGear(r = r_jar_pitch, teeth = z_jar, thickness = gear_thick, bore = 14, col = color_gear_planet);
 
             // Spindle shaft connecting gear through carrier disc

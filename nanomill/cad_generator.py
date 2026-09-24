@@ -45,7 +45,7 @@ class BallMillCADGenerator:
         # Exact gear kinematics with reversing intermediate idler gears
         z_jar = 16
         z_sun = int(round(abs(k_ratio) * z_jar))
-        z_idler = 14
+        z_idler = 16
         gear_total_teeth = z_sun + 2 * z_idler + z_jar
         gear_module = (2.0 * R_sun) / gear_total_teeth
         r_sun_pitch = gear_module * z_sun / 2.0
@@ -131,7 +131,7 @@ module PlanetaryBallMillAssembly() {{
 
             // Planet Jar Gear at R_sun meshing with Idler Gear
             translate([R_sun, 0, gear_z])
-                rotate([0, 0, (180.0 / z_jar)])
+                rotate([0, 0, 0])
                     MechanicalSpurGear(r = r_jar_pitch, teeth = z_jar, thickness = gear_thick, bore = 14, col = color_gear_planet);
 
             // Spindle shaft connecting gear through carrier disc
@@ -1161,21 +1161,25 @@ rotate([system_tilt_x, 0, 0])
         <div class="dem-telemetry-col">
           <!-- Live Dynamics Card -->
           <div class="dem-stat-card">
-            <div class="dem-card-hdr">⚡ Instantaneous Collision Dynamics</div>
+            <div class="dem-card-hdr">⚡ Instantaneous Collision Dynamics (Jar Driven)</div>
+            <div class="dem-stat-row">
+              <span>Milling Jar Spindle (ω):</span>
+              <strong id="dem-active-jar-rpm" style="color:#0284c7;">-900 RPM</strong>
+            </div>
             <div class="dem-stat-row">
               <span>Collision Rate:</span>
-              <strong id="dem-collision-rate" style="color:#0284c7;">1,850 Hz</strong>
+              <strong id="dem-collision-rate" style="color:#0284c7;">2,050 Hz</strong>
             </div>
             <div class="dem-stat-row">
               <span>Impact Velocity (v<sub>imp</sub>):</span>
-              <strong id="dem-impact-velocity">2.38 m/s</strong>
+              <strong id="dem-impact-velocity">2.45 m/s</strong>
             </div>
             <div class="dem-stat-row">
               <span>Single Impact Energy:</span>
-              <strong id="dem-impact-energy">4.54 mJ</strong>
+              <strong id="dem-impact-energy">5.40 mJ</strong>
             </div>
             <div class="dem-stat-row">
-              <span>Milling Shock Power:</span>
+              <span>Milling Power Dissipation:</span>
               <strong id="dem-impact-power">8.3 W</strong>
             </div>
           </div>
@@ -1333,25 +1337,25 @@ rotate([system_tilt_x, 0, 0])
     function createGearGeometry(pitchRadius, thickness, numTeeth, toothHeight, boreRadius) {{
       const shape = new THREE.Shape();
       const toothAngle = (2 * Math.PI) / numTeeth;
-      const rTip = pitchRadius + toothHeight * 0.42;
-      const rBase = pitchRadius - toothHeight * 0.52;
+      const rTip = pitchRadius + toothHeight * 0.44;
+      const rBase = pitchRadius - toothHeight * 0.48;
 
       for (let i = 0; i < numTeeth; i++) {{
-        const a0 = i * toothAngle;
-        const a1 = a0 + toothAngle * 0.16; // root bottom
-        const a2 = a0 + toothAngle * 0.32; // flank up
-        const a3 = a0 + toothAngle * 0.48; // top crest
-        const a4 = a0 + toothAngle * 0.64; // flank down
-        const a5 = (i + 1) * toothAngle;   // root bottom
+        // Tooth crest centered at i * toothAngle
+        const a_center = i * toothAngle;
+        const a0 = a_center - 0.08 * toothAngle; // crest start
+        const a1 = a_center + 0.08 * toothAngle; // crest end
+        const a2 = a_center + 0.24 * toothAngle; // root flank down
+        const a3 = a_center + 0.76 * toothAngle; // root valley bottom
+        const a4 = a_center + 0.92 * toothAngle; // next tooth flank up
 
-        if (i === 0) shape.moveTo(rBase * Math.cos(a0), rBase * Math.sin(a0));
-        else shape.lineTo(rBase * Math.cos(a0), rBase * Math.sin(a0));
+        if (i === 0) shape.moveTo(rTip * Math.cos(a0), rTip * Math.sin(a0));
+        else shape.lineTo(rTip * Math.cos(a0), rTip * Math.sin(a0));
 
-        shape.lineTo(rBase * Math.cos(a1), rBase * Math.sin(a1));
-        shape.lineTo(rTip * Math.cos(a2), rTip * Math.sin(a2));
-        shape.lineTo(rTip * Math.cos(a3), rTip * Math.sin(a3));
-        shape.lineTo(rBase * Math.cos(a4), rBase * Math.sin(a4));
-        shape.lineTo(rBase * Math.cos(a5), rBase * Math.sin(a5));
+        shape.lineTo(rTip * Math.cos(a1), rTip * Math.sin(a1));
+        shape.lineTo(rBase * Math.cos(a2), rBase * Math.sin(a2));
+        shape.lineTo(rBase * Math.cos(a3), rBase * Math.sin(a3));
+        shape.lineTo(rTip * Math.cos(a4), rTip * Math.sin(a4));
       }}
       shape.closePath();
 
@@ -1513,6 +1517,7 @@ rotate([system_tilt_x, 0, 0])
     const vials = [];
     const vialMaterials = [];
     const planetGearMeshes = [];
+    const idlerHolders = [];
     const idlerGearMeshes = [];
     const idlerPinMeshes = [];
     const finMeshes = [];
@@ -1525,7 +1530,7 @@ rotate([system_tilt_x, 0, 0])
     let currentK = {k_init};
     let currentSunRPM = {sun_rpm_init};
     let currentZs = 32;
-    let currentZidler = 14;
+    let currentZidler = 16;
     let currentZjar = 16;
     const latestJarNetG = [];
     for (let i = 0; i < nVials; i++) latestJarNetG.push({self.kin.g_force_sun():.1f});
@@ -1535,6 +1540,7 @@ rotate([system_tilt_x, 0, 0])
       const angle = (i * 2 * Math.PI) / nVials;
       const vialGroup = new THREE.Group();
       vialGroup.position.set(R_s * Math.cos(angle), 0, R_s * Math.sin(angle));
+      vialGroup.rotation.y = -angle;
 
       // Spindle shaft connecting gear to vial through carrier disc
       const spindleShaftGeom = new THREE.CylinderGeometry(1.2, 1.2, vialBaseY - gearY + 1.0, 16);
@@ -1670,7 +1676,7 @@ rotate([system_tilt_x, 0, 0])
       const kAbs = Math.abs(k);
       const Z_jar = 16;
       const Z_s = Math.round(kAbs * Z_jar);
-      const Z_idler = 14;
+      const Z_idler = 16; // 4-fold symmetric gear train!
       currentZs = Z_s;
       currentZidler = Z_idler;
       currentZjar = Z_jar;
@@ -1697,37 +1703,40 @@ rotate([system_tilt_x, 0, 0])
       addBlackEdges(sunGearMesh, 30);
 
       // 2. Rebuild 4 Intermediate Reversing Idler Gears & Mounting Pins on Carrier Disc
-      idlerGearMeshes.forEach(mesh => {{
-        sunAssembly.remove(mesh);
-        mesh.geometry.dispose();
+      idlerHolders.forEach(h => {{
+        sunAssembly.remove(h);
       }});
+      idlerHolders.length = 0;
       idlerGearMeshes.length = 0;
-
-      idlerPinMeshes.forEach(pin => {{
-        sunAssembly.remove(pin);
-        pin.geometry.dispose();
-      }});
       idlerPinMeshes.length = 0;
 
       for (let i = 0; i < nVials; i++) {{
         const angle = vials[i].angle;
+        const idlerHolder = new THREE.Group();
+        idlerHolder.position.set(r_idler_center * Math.cos(angle), gearY, r_idler_center * Math.sin(angle));
+        idlerHolder.rotation.y = -angle; // Oriented along radial spindle arm i!
+
         // Intermediate idler gear
+        // Presents TOOTH VALLEY at local -X (meshing with sun gear's TOOTH CREST)
+        // Presents TOOTH VALLEY at local +X (meshing with jar gear's TOOTH CREST)
         const idlerGeom = createGearGeometry(r_idler, gearThickness, Z_idler, toothHeight, 1.2);
         const idlerMesh = new THREE.Mesh(idlerGeom, idlerGearMat);
         idlerMesh.rotation.x = Math.PI / 2;
-        idlerMesh.position.set(r_idler_center * Math.cos(angle), gearY, r_idler_center * Math.sin(angle));
-        idlerMesh.rotation.z = Math.PI / Z_idler;
-        sunAssembly.add(idlerMesh);
+        idlerMesh.rotation.z = Math.PI / Z_idler; // Valley at local -X and +X!
+        idlerHolder.add(idlerMesh);
         addBlackEdges(idlerMesh, 30);
         idlerGearMeshes.push(idlerMesh);
 
         // Mounting pin connecting idler gear to carrier disc
         const pinGeom = new THREE.CylinderGeometry(0.85, 0.85, vialBaseY - gearY + 0.5, 16);
         const pinMesh = new THREE.Mesh(pinGeom, shaftMat);
-        pinMesh.position.set(r_idler_center * Math.cos(angle), gearY + (vialBaseY - gearY) / 2, r_idler_center * Math.sin(angle));
-        sunAssembly.add(pinMesh);
+        pinMesh.position.set(0, (vialBaseY - gearY) / 2, 0);
+        idlerHolder.add(pinMesh);
         addBlackEdges(pinMesh);
         idlerPinMeshes.push(pinMesh);
+
+        sunAssembly.add(idlerHolder);
+        idlerHolders.push(idlerHolder);
       }}
 
       // 3. Rebuild 4 Planet Jar Gears on Jar Spindles
@@ -1736,14 +1745,24 @@ rotate([system_tilt_x, 0, 0])
           vials[i].gearHolder.remove(planetGearMeshes[i]);
           planetGearMeshes[i].geometry.dispose();
         }}
+        // Jar gear presents TOOTH CREST at local -X (meshing with idler's TOOTH VALLEY)
         const pGeom = createGearGeometry(r_jar, gearThickness, Z_jar, toothHeight, 1.2);
         const pGear = new THREE.Mesh(pGeom, planetGearMat);
         pGear.rotation.x = Math.PI / 2;
         pGear.position.set(0, 0, 0);
-        pGear.rotation.z = Math.PI / Z_jar;
+        pGear.rotation.z = 0; // Crest at local -X!
         vials[i].gearHolder.add(pGear);
         addBlackEdges(pGear, 30);
         planetGearMeshes[i] = pGear;
+      }}
+
+      // Synchronize exact conjugate tooth meshing with current carrier angle
+      const carrRot = sunAssembly ? sunAssembly.rotation.y : 0.0;
+      for (let i = 0; i < nVials; i++) {{
+        vials[i].group.rotation.y = -vials[i].angle - kAbs * carrRot;
+        if (idlerGearMeshes[i]) {{
+          idlerGearMeshes[i].rotation.z = (Math.PI / currentZidler) - (currentZs / currentZidler) * carrRot;
+        }}
       }}
 
       // Update Pitch & Teeth Displays
@@ -1827,6 +1846,11 @@ rotate([system_tilt_x, 0, 0])
           gForceArrows[i].scale.set(1.0, gScale, 1.0);
         }}
       }}
+
+      // Instantaneously update Jar #1 DEM particle simulation telemetry with the new Jar RPM & G-forces
+      if (typeof jar1Sim !== 'undefined' && jar1Sim) {{
+        jar1Sim.updateTelemetryDOM(sunRPM, k, currentTiltDeg);
+      }}
     }}
 
     // RPM Slider
@@ -1883,6 +1907,7 @@ rotate([system_tilt_x, 0, 0])
     const chkAllIdlers = document.getElementById('chk-all-idlers');
     if (chkAllIdlers) {{
       chkAllIdlers.addEventListener('change', (e) => {{
+        idlerHolders.forEach(h => h.visible = e.target.checked);
         idlerGearMeshes.forEach(m => m.visible = e.target.checked);
         idlerPinMeshes.forEach(p => p.visible = e.target.checked);
       }});
@@ -2253,16 +2278,17 @@ rotate([system_tilt_x, 0, 0])
         }});
       }}
 
-      recordImpact(x, y, vn, sunRPM) {{
+      recordImpact(x, y, vn, jarRPM) {{
         this.totalImpacts++;
         const now = performance.now();
         this.impactHistory.push({{ time: now }});
         while (this.impactHistory.length > 0 && now - this.impactHistory[0].time > 1000) {{
           this.impactHistory.shift();
         }}
-        const rpmFactor = (sunRPM || 450.0) / 450.0;
-        this.collisionRate = Math.round(this.impactHistory.length * 4.2 * rpmFactor + 1600);
-        this.peakImpactV = Math.max(1.8, Math.min(5.4, 2.38 * rpmFactor + (Math.random() - 0.5) * 0.3));
+        // Jar Spindle RPM (e.g. 900 RPM at nominal k=-2.0, 450 RPM sun) drives collision kinetics
+        const jarFactor = (jarRPM || 900.0) / 900.0;
+        this.collisionRate = Math.round(this.impactHistory.length * 4.2 * jarFactor + 1600 * jarFactor);
+        this.peakImpactV = Math.max(0.6, Math.min(6.5, 2.45 * jarFactor + (Math.random() - 0.5) * 0.25));
 
         // Impact spark shockwave
         this.sparks.push({{
@@ -2274,11 +2300,11 @@ rotate([system_tilt_x, 0, 0])
           color: vn > 80 ? '#f59e0b' : '#38bdf8'
         }});
 
-        // Comminution kinetics & energy dose
+        // Comminution kinetics & energy dose driven by Jar RPM
         const impactEnergy_mJ = 0.5 * 1.8 * Math.pow(this.peakImpactV, 2);
         this.cumEnergy_J += impactEnergy_mJ * 1e-3;
         if (this.d50_nm > this.d_limit_nm) {{
-          this.d50_nm = Math.max(this.d_limit_nm, this.d50_nm * (1.0 - 0.00015 * rpmFactor));
+          this.d50_nm = Math.max(this.d_limit_nm, this.d50_nm * (1.0 - 0.00015 * jarFactor));
         }}
       }}
 
@@ -2316,6 +2342,7 @@ rotate([system_tilt_x, 0, 0])
         // REVERSING GEAR: Jar drum rotates in OPPOSITE direction (Clockwise in 2D view)!
         // When carrier turns CCW, the reversing intermediate idler gear causes the jar drum to rotate CW.
         const speedRatio = Math.abs(k);
+        const jarRPM = speedRatio * sunRPM;
         const omegaJarVis = isRotating ? (speedRatio * Math.abs(omegaSunVis)) : 0.0;
 
         // Map real-time physics vectors (m/s²) directly into canvas simulation units (px/s²)
@@ -2398,7 +2425,7 @@ rotate([system_tilt_x, 0, 0])
                 b.spin += (vt * 0.03);
 
                 if (vn > 40.0) {{
-                  this.recordImpact(b.x, b.y, vn, sunRPM);
+                  this.recordImpact(b.x, b.y, vn, jarRPM);
                   this.splashPowderAt(b.x, b.y, nx, ny, vn * 0.15);
                 }}
               }}
@@ -2449,7 +2476,7 @@ rotate([system_tilt_x, 0, 0])
                   if (Math.abs(rvn) > 35.0) {{
                     const mx = (b1.x + b2.x) * 0.5;
                     const my = (b1.y + b2.y) * 0.5;
-                    this.recordImpact(mx, my, Math.abs(rvn), sunRPM);
+                    this.recordImpact(mx, my, Math.abs(rvn), jarRPM);
                     this.splashPowderAt(mx, my, nx, ny, Math.abs(rvn) * 0.12);
                   }}
                 }}
@@ -2528,14 +2555,23 @@ rotate([system_tilt_x, 0, 0])
       }}
 
       updateTelemetryDOM(sunRPM, k, tiltDeg) {{
+        const speedRatio = Math.abs(k);
+        const jarRPM = speedRatio * sunRPM;
+        const jarFactor = (jarRPM || 900.0) / 900.0;
+        const omega_vial = (jarRPM * 2 * Math.PI) / 60.0;
+        const gWall = (Math.pow(omega_vial, 2) * {self.geom.vial_radius_m}) / 9.80665;
+
+        const elJarRpm = document.getElementById('dem-active-jar-rpm');
+        if (elJarRpm) elJarRpm.textContent = `-${{Math.round(jarRPM)}} RPM`;
+
         const elColl = document.getElementById('dem-collision-rate');
-        if (elColl) elColl.textContent = `${{this.collisionRate.toLocaleString()}} Hz`;
+        if (elColl) elColl.textContent = `${{Math.round(this.collisionRate).toLocaleString()}} Hz`;
         const elV = document.getElementById('dem-impact-velocity');
         if (elV) elV.textContent = `${{this.peakImpactV.toFixed(2)}} m/s`;
         const elE = document.getElementById('dem-impact-energy');
         if (elE) elE.textContent = `${{(0.5 * 1.8 * Math.pow(this.peakImpactV, 2)).toFixed(2)}} mJ`;
         const elP = document.getElementById('dem-impact-power');
-        if (elP) elP.textContent = `${{(8.3 * (sunRPM / 450.0)).toFixed(1)}} W`;
+        if (elP) elP.textContent = `${{(8.3 * Math.pow(jarFactor, 2)).toFixed(1)}} W`;
 
         const elD50 = document.getElementById('dem-live-d50');
         if (elD50) {{
@@ -2559,12 +2595,12 @@ rotate([system_tilt_x, 0, 0])
         if (elDose) elDose.textContent = `${{(this.cumEnergy_J / (this.powderMass_g * 1e-3) / 3600.0).toFixed(2)}} Wh/kg`;
 
         const elHudSpin = document.getElementById('dem-hud-spin');
-        if (elHudSpin) elHudSpin.textContent = `ω: -${{Math.round(Math.abs(k) * sunRPM)}} RPM (Opposite)`;
+        if (elHudSpin) elHudSpin.innerHTML = `Jar: <b style="color:#38bdf8;">-${{Math.round(jarRPM)}} RPM</b> | Sun: <b>+${{Math.round(sunRPM)}} RPM</b>`;
 
         const elHudG = document.getElementById('dem-hud-gforce');
         if (elHudG) {{
           const gVal = this.latestNetG !== undefined ? this.latestNetG : (latestJarNetG && latestJarNetG[0] !== undefined ? latestJarNetG[0] : 36.2);
-          elHudG.textContent = `${{gVal.toFixed(1)}} G Net`;
+          elHudG.innerHTML = `Net: <b style="color:#ef4444;">${{gVal.toFixed(1)}} G</b> | Wall: <b>${{gWall.toFixed(1)}} G</b>`;
         }}
 
         const elHudRegime = document.getElementById('dem-hud-regime');
@@ -2576,21 +2612,26 @@ rotate([system_tilt_x, 0, 0])
       }}
 
       drawForcesCompass(ctx) {{
-        const compX = this.width - 42;
-        const compY = this.height - 42;
-        const compR = 28;
+        const compX = this.width - 44;
+        const compY = this.height - 44;
+        const compR = 30;
 
         ctx.save();
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 1.5;
+        // Dial background
+        const gradDial = ctx.createRadialGradient(compX, compY, 2, compX, compY, compR);
+        gradDial.addColorStop(0, '#1e293b');
+        gradDial.addColorStop(0.8, '#0f172a');
+        gradDial.addColorStop(1, '#020617');
+        ctx.fillStyle = gradDial;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
         ctx.arc(compX, compY, compR, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
         // Compass crosshairs
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(compX - compR + 4, compY); ctx.lineTo(compX + compR - 4, compY);
@@ -2599,15 +2640,16 @@ rotate([system_tilt_x, 0, 0])
 
         // Direction labels
         ctx.fillStyle = '#94a3b8';
-        ctx.font = 'bold 8px -apple-system, sans-serif';
+        ctx.font = 'bold 7.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('OUT', compX, compY + compR - 3);
         ctx.fillText('IN', compX, compY - compR + 8);
-        ctx.fillText('TAN', compX + compR - 8, compY + 3);
+        ctx.fillText('Ω', compX + compR - 7, compY + 3);
+        ctx.fillText('ω', compX - compR + 7, compY + 3);
 
         // Real-Time Net G-force vector arrow (Red)
         const gMagScale = Math.min(1.0, Math.max(0.35, Math.sqrt((this.latestNetG || 36.2) / 36.2)));
-        const arrowLen = compR * 0.72 * gMagScale;
+        const arrowLen = compR * 0.74 * gMagScale;
         const fx = Math.cos(this.latestNetAngle) * arrowLen;
         const fy = Math.sin(this.latestNetAngle) * arrowLen;
 
@@ -2620,7 +2662,7 @@ rotate([system_tilt_x, 0, 0])
 
         // Arrow head
         const headAngle = Math.atan2(fy, fx);
-        const headLen = 6.0;
+        const headLen = 6.5;
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.moveTo(compX + fx, compY + fy);
@@ -2638,12 +2680,12 @@ rotate([system_tilt_x, 0, 0])
         // Center hub dot
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(compX, compY, 2.0, 0, Math.PI * 2);
+        ctx.arc(compX, compY, 2.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // G-force numerical readout badge below arrow
+        // G-force numerical readout badge inside dial
         ctx.fillStyle = '#f8fafc';
-        ctx.font = 'bold 9px monospace';
+        ctx.font = 'bold 8.5px ui-monospace, monospace';
         ctx.textAlign = 'center';
         ctx.fillText(`${{(this.latestNetG || 36.2).toFixed(1)}}G`, compX, compY - 4);
 
@@ -2988,11 +3030,12 @@ rotate([system_tilt_x, 0, 0])
 
       if (isRotating) {{
         sunAssembly.rotation.y += currentOmega;
+        // Analytical conjugate tooth meshing: lock gear angles directly to carrier rotation angle (zero drift, zero offset)
         vials.forEach(v => {{
-          v.group.rotation.y += vialSpinSpeed;
+          v.group.rotation.y = -v.angle - speedRatio * sunAssembly.rotation.y;
         }});
         idlerGearMeshes.forEach(m => {{
-          m.rotation.z += idlerSpinSpeed;
+          m.rotation.z = (Math.PI / currentZidler) - (currentZs / currentZidler) * sunAssembly.rotation.y;
         }});
         animClock += 0.025 * Math.max(0.1, currentSunRPM / 450.0) * driveDir;
       }}
@@ -3041,7 +3084,7 @@ rotate([system_tilt_x, 0, 0])
         if (i === 0) {{
           const a_in_carr = a_net_world.clone().applyQuaternion(invSunQuat);
           jar1_a_radial = a_in_carr.x;
-          jar1_a_tangent = a_in_carr.z;
+          jar1_a_tangent = -a_in_carr.z; // Forward tangential direction along carrier rotation is -Z
           jar1_netG = netG;
         }}
 
