@@ -192,6 +192,207 @@
     }
     .dock-btn:hover { background: #f1f5f9; color: #0f172a; }
     .dock-btn.active { background: #0f172a; color: #ffffff; border-color: #0f172a; }
+
+    /* --- DEDICATED JAR #1 DEM PARTICLE & POWDER SIMULATION PANEL --- */
+    #jar1-dem-panel {
+      position: absolute;
+      top: 55px;
+      right: 320px;
+      z-index: 35;
+      width: 635px;
+      max-width: calc(100vw - 360px);
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    #jar1-dem-panel.collapsed .dem-panel-body {
+      display: none;
+    }
+    .dem-panel-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+      user-select: none;
+    }
+    .dem-panel-header:active {
+      cursor: grabbing;
+    }
+    .dem-live-pulse {
+      width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
+      box-shadow: 0 0 6px #22c55e; display: inline-block;
+      animation: demPulse 1.6s infinite ease-in-out;
+    }
+    @keyframes demPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.6; }
+    }
+    .dem-hdr-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f1f5f9;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .dem-hdr-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+    .dem-hdr-btn.dem-close-btn:hover {
+      background: #ef4444;
+      border-color: #dc2626;
+    }
+    .dem-panel-body {
+      display: flex;
+      padding: 10px;
+      gap: 12px;
+      background: #ffffff;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .dem-canvas-col {
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .dem-canvas-wrapper {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      background: #090d16;
+      border-radius: 10px;
+      border: 1.5px solid #334155;
+      overflow: hidden;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
+    }
+    #jar1-dem-canvas {
+      width: 320px;
+      height: 320px;
+      display: block;
+    }
+    #dem-hud-overlay {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      font-size: 10.5px;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    .dem-canvas-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .dem-btn-group {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+    }
+    .dem-tool-btn {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .dem-tool-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .dem-tool-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0369a1;
+    }
+    .dem-telemetry-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 11px;
+    }
+    .dem-stat-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .dem-card-hdr {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 11px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .dem-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+      color: #475569;
+      font-size: 10.5px;
+    }
+    .dem-stat-row strong {
+      color: #0f172a;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+    .dem-progress-track {
+      width: 100%;
+      height: 7px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 4px 0;
+    }
+    .dem-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8 0%, #0284c7 60%, #10b981 100%);
+      width: 4%;
+      transition: width 0.3s ease-out;
+    }
+    .dem-lbl {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    .dem-select {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 3px 4px;
+      font-size: 10.5px;
+      color: #0f172a;
+      outline: none;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -419,6 +620,11 @@
               <div class="jar-stat-item">Wall G-Force: <b id="stat-jar-g-0">40.2 G</b></div>
               <div class="jar-stat-item">Tip Speed: <b id="stat-jar-vtip-0">4.2 m/s</b></div>
             </div>
+            
+            <button class="ctrl-btn active" id="btn-card-jar1-sim" style="width:100%; margin-top:6px; background:#0284c7; color:#fff; border:none; padding:4px 8px; border-radius:5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+              <span>🔬</span><span>Simulate Particles & Powder</span>
+            </button>
+            
           </div>
           
           <div class="jar-card" id="card-jar-1">
@@ -432,6 +638,7 @@
               <div class="jar-stat-item">Wall G-Force: <b id="stat-jar-g-1">40.2 G</b></div>
               <div class="jar-stat-item">Tip Speed: <b id="stat-jar-vtip-1">4.2 m/s</b></div>
             </div>
+            
           </div>
           
           <div class="jar-card" id="card-jar-2">
@@ -445,6 +652,7 @@
               <div class="jar-stat-item">Wall G-Force: <b id="stat-jar-g-2">40.2 G</b></div>
               <div class="jar-stat-item">Tip Speed: <b id="stat-jar-vtip-2">4.2 m/s</b></div>
             </div>
+            
           </div>
           
           <div class="jar-card" id="card-jar-3">
@@ -458,6 +666,7 @@
               <div class="jar-stat-item">Wall G-Force: <b id="stat-jar-g-3">40.2 G</b></div>
               <div class="jar-stat-item">Tip Speed: <b id="stat-jar-vtip-3">4.2 m/s</b></div>
             </div>
+            
           </div>
           
         </div>
@@ -488,8 +697,156 @@
       <button class="dock-btn active" id="btn-toggle-edges">Black Edges</button>
       <button class="dock-btn active" id="btn-toggle-gforce">🔴 G-Force Arrows</button>
       <button class="dock-btn active" id="btn-toggle-tooltips">🏷️ Tooltips</button>
+      <button class="dock-btn active" id="btn-toggle-jar1-sim" style="background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; font-weight:700;">🔬 Jar #1 Particle Sim</button>
       <button class="dock-btn" id="btn-toggle-tilt">🔄 Tilt: 0° Vert</button>
       <button class="dock-btn" id="btn-reset-cam">Reset View</button>
+    </div>
+
+    <!-- JAR #1 DEDICATED PARTICLE & POWDER DEM SIMULATION PANEL -->
+    <div id="jar1-dem-panel">
+      <div class="dem-panel-header" id="dem-panel-drag-handle">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">🔬</span>
+          <div>
+            <div style="font-weight:800; font-size:12.5px; color:#ffffff; letter-spacing:0.3px;">JAR #1 INTERIOR DEM PARTICLE & POWDER SIMULATOR</div>
+            <div style="font-size:10px; color:#94a3b8; display:flex; align-items:center; gap:6px;">
+              <span class="dem-live-pulse"></span>
+              <span>Live Cross-Sectional Chamber</span> • <span>Dry Powder & Balls</span> • <span>Coupled Kinematics</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="dem-hdr-btn" id="btn-dem-reset" title="Reset Charge">↺ Reset</button>
+          <button class="dem-hdr-btn" id="btn-dem-min" title="Minimize / Restore">_</button>
+          <button class="dem-hdr-btn dem-close-btn" id="btn-dem-close" title="Close Panel">✕</button>
+        </div>
+      </div>
+
+      <div class="dem-panel-body" id="dem-panel-body-content">
+        <!-- Left: Canvas Viewport -->
+        <div class="dem-canvas-col">
+          <div class="dem-canvas-wrapper">
+            <canvas id="jar1-dem-canvas" width="320" height="320"></canvas>
+            <div id="dem-hud-overlay">
+              <div style="text-align:left;">
+                <div style="font-weight:700; color:#38bdf8;">🧪 Jar #1 Drum</div>
+                <div id="dem-hud-spin" style="color:#e2e8f0;">ω: -900 RPM</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:700; color:#ef4444;" id="dem-hud-gforce">36.2 G Net</div>
+                <div id="dem-hud-regime" style="color:#f59e0b;">Cataracting</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Canvas Toolbar -->
+          <div class="dem-canvas-toolbar">
+            <div class="dem-btn-group">
+              <button class="dem-tool-btn active" data-dem-view="all">All (Balls + Powder)</button>
+              <button class="dem-tool-btn" data-dem-view="balls">Balls Only</button>
+              <button class="dem-tool-btn" data-dem-view="powder">Powder Only</button>
+              <button class="dem-tool-btn" data-dem-view="forces">Force Vectors</button>
+            </div>
+            <div class="dem-btn-group" style="margin-top:2px;">
+              <button class="dem-tool-btn" id="btn-dem-playpause">⏸ Pause</button>
+              <button class="dem-tool-btn" data-dem-speed="0.5">0.5x</button>
+              <button class="dem-tool-btn active" data-dem-speed="1.0">1.0x</button>
+              <button class="dem-tool-btn" data-dem-speed="2.0">2.0x</button>
+              <button class="dem-tool-btn" id="btn-dem-burst" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">💥 Powder Burst</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Telemetry & Comminution Solvers -->
+        <div class="dem-telemetry-col">
+          <!-- Live Dynamics Card -->
+          <div class="dem-stat-card">
+            <div class="dem-card-hdr">⚡ Instantaneous Collision Dynamics</div>
+            <div class="dem-stat-row">
+              <span>Collision Rate:</span>
+              <strong id="dem-collision-rate" style="color:#0284c7;">1,850 Hz</strong>
+            </div>
+            <div class="dem-stat-row">
+              <span>Impact Velocity (v<sub>imp</sub>):</span>
+              <strong id="dem-impact-velocity">2.38 m/s</strong>
+            </div>
+            <div class="dem-stat-row">
+              <span>Single Impact Energy:</span>
+              <strong id="dem-impact-energy">4.54 mJ</strong>
+            </div>
+            <div class="dem-stat-row">
+              <span>Milling Shock Power:</span>
+              <strong id="dem-impact-power">8.3 W</strong>
+            </div>
+          </div>
+
+          <!-- Comminution Kinetics Card -->
+          <div class="dem-stat-card">
+            <div class="dem-card-hdr">📉 Dry Powder Comminution (Nanogrinding)</div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">
+              <span style="font-size:11px; color:#475569;">Median Particle Size (D<sub>50</sub>):</span>
+              <span id="dem-live-d50" style="font-size:17px; font-weight:800; color:#0284c7; font-family:ui-monospace, monospace;">45.00 µm</span>
+            </div>
+            <div class="dem-progress-track">
+              <div class="dem-progress-fill" id="dem-d50-bar"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:#64748b; margin-top:2px;">
+              <span>Start: 45 µm (Micro)</span>
+              <span>Limit: 18 nm (Nano)</span>
+            </div>
+            <div class="dem-stat-row" style="margin-top:6px;">
+              <span>Cumulative Impacts:</span>
+              <strong id="dem-total-impacts">0</strong>
+            </div>
+            <div class="dem-stat-row">
+              <span>Specific Energy Dose:</span>
+              <strong id="dem-energy-dose">0.00 Wh/kg</strong>
+            </div>
+          </div>
+
+          <!-- Media & Powder Configuration -->
+          <div class="dem-stat-card">
+            <div class="dem-card-hdr">⚙️ Media & Powder Charge Setup</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:4px;">
+              <div>
+                <label class="dem-lbl">Ball Media:</label>
+                <select id="dem-sel-balls" class="dem-select">
+                  <option value="14">14 Balls (Light)</option>
+                  <option value="22" selected>22 Balls (Optimal)</option>
+                  <option value="32">32 Balls (Dense)</option>
+                </select>
+              </div>
+              <div>
+                <label class="dem-lbl">Powder Material:</label>
+                <select id="dem-sel-powder-mat" class="dem-select">
+                  <option value="alumina" selected>Al2O3 (Alumina)</option>
+                  <option value="zirconia">ZrO2 (Zirconia)</option>
+                  <option value="carbide">SiC (Carbide)</option>
+                  <option value="carbon">Graphite / C</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px;">
+              <div>
+                <label class="dem-lbl">Powder Mass:</label>
+                <select id="dem-sel-powder-mass" class="dem-select">
+                  <option value="10">10 g (BPR 8:1)</option>
+                  <option value="25" selected>25 g (BPR 3.2:1)</option>
+                  <option value="50">50 g (BPR 1.6:1)</option>
+                </select>
+              </div>
+              <div>
+                <label class="dem-lbl">Powder Particles:</label>
+                <select id="dem-sel-particle-count" class="dem-select">
+                  <option value="350">350 Particles</option>
+                  <option value="650" selected>650 Particles</option>
+                  <option value="1200">1,200 Particles</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Floating Jar G-Force HUD Badges / Tooltips -->
@@ -1274,6 +1631,830 @@
       renderer.setSize(w, h);
     });
 
+    // --- JAR #1 INTERIOR DEM PARTICLE & DRY POWDER SIMULATOR ---
+    class Jar1DEMSimulator {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.width = canvas.width;
+        this.height = canvas.height;
+        this.cx = this.width / 2;
+        this.cy = this.height / 2;
+        this.R_jar = 138; // chamber radius in canvas px
+
+        this.numBalls = 22;
+        this.numPowder = 650;
+        this.powderMaterial = 'alumina';
+        this.viewMode = 'all'; // 'all', 'balls', 'powder', 'forces'
+        this.simSpeed = 1.0;
+        this.isPaused = false;
+
+        this.balls = [];
+        this.powder = [];
+        this.sparks = [];
+        this.ejecta = [];
+
+        this.jarAngle = 0.0;
+        this.carrierAngle = 0.0;
+        this.latestNetAngle = Math.PI * 0.5;
+        this.latestNetG = 0.0;
+
+        // Comminution metrics
+        this.totalImpacts = 0;
+        this.impactHistory = [];
+        this.collisionRate = 2150;
+        this.peakImpactV = 2.45;
+        this.d50_nm = 45000.0; // starts at 45.0 um (45000 nm)
+        this.d_limit_nm = 18.0;
+        this.cumEnergy_J = 0.0;
+        this.powderMass_g = 25.0;
+
+        this.initCharge();
+      }
+
+      getPowderPalette() {
+        if (this.powderMaterial === 'zirconia') {
+          return ['#ffffff', '#f1f5f9', '#e2e8f0', '#cbd5e1'];
+        } else if (this.powderMaterial === 'carbide') {
+          return ['#1e293b', '#334155', '#475569', '#0284c7'];
+        } else if (this.powderMaterial === 'carbon') {
+          return ['#0f172a', '#1e293b', '#334155', '#52525b'];
+        }
+        // Default Alumina:
+        return ['#fef9c3', '#fef08a', '#fde047', '#f8fafc', '#ffffff'];
+      }
+
+      initCharge() {
+        this.balls = [];
+        this.powder = [];
+        this.sparks = [];
+        this.ejecta = [];
+
+        // Distribute balls in natural cluster along the primary outward wall pocket
+        for (let i = 0; i < this.numBalls; i++) {
+          const r_b = 10.5 + (i % 4) * 0.8; // 10.5mm - 12.9mm grinding media
+          const theta = 0.32 * Math.PI + (i / this.numBalls) * 0.38 * Math.PI + (Math.random() - 0.5) * 0.12;
+          const dist = (this.R_jar - r_b - 3) - Math.floor(i / 7) * 19 - Math.random() * 4;
+          this.balls.push({
+            x: this.cx + dist * Math.cos(theta),
+            y: this.cy + dist * Math.sin(theta),
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            r: r_b,
+            m: Math.pow(r_b / 11.0, 3),
+            spin: 0,
+            spinAngle: Math.random() * Math.PI * 2
+          });
+        }
+
+        // Distribute dry powder particles in the bed
+        const pCols = this.getPowderPalette();
+        for (let p = 0; p < this.numPowder; p++) {
+          const theta = 0.22 * Math.PI + Math.random() * 0.58 * Math.PI;
+          const dist = this.R_jar - 2 - Math.random() * 32;
+          this.powder.push({
+            x: this.cx + dist * Math.cos(theta),
+            y: this.cy + dist * Math.sin(theta),
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
+            r: 1.2 + Math.random() * 0.7,
+            color: pCols[p % pCols.length],
+            alpha: 0.65 + Math.random() * 0.30
+          });
+        }
+      }
+
+      setPowderMaterial(mat) {
+        this.powderMaterial = mat;
+        const pCols = this.getPowderPalette();
+        this.powder.forEach((p, idx) => {
+          p.color = pCols[idx % pCols.length];
+        });
+      }
+
+      setBallCount(count) {
+        this.numBalls = parseInt(count) || 22;
+        this.initCharge();
+      }
+
+      setPowderCount(count) {
+        this.numPowder = parseInt(count) || 650;
+        this.initCharge();
+      }
+
+      triggerPowderBurst() {
+        const burstCount = 120;
+        const pCols = this.getPowderPalette();
+        for (let i = 0; i < burstCount; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 25 + Math.random() * 55;
+          this.ejecta.push({
+            x: this.cx + (Math.random() - 0.5) * 20,
+            y: this.cy + (Math.random() - 0.5) * 20,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            r: 1.5 + Math.random() * 1.5,
+            color: pCols[i % pCols.length],
+            life: 1.0,
+            maxLife: 35 + Math.random() * 20
+          });
+        }
+        this.sparks.push({
+          x: this.cx,
+          y: this.cy,
+          r: 4,
+          maxR: 35,
+          alpha: 1.0,
+          color: '#f59e0b'
+        });
+      }
+
+      recordImpact(x, y, vn, sunRPM) {
+        this.totalImpacts++;
+        const now = performance.now();
+        this.impactHistory.push({ time: now });
+        while (this.impactHistory.length > 0 && now - this.impactHistory[0].time > 1000) {
+          this.impactHistory.shift();
+        }
+        const rpmFactor = (sunRPM || 450.0) / 450.0;
+        this.collisionRate = Math.round(this.impactHistory.length * 4.2 * rpmFactor + 1600);
+        this.peakImpactV = Math.max(1.8, Math.min(5.4, 2.38 * rpmFactor + (Math.random() - 0.5) * 0.3));
+
+        // Impact spark shockwave
+        this.sparks.push({
+          x: x,
+          y: y,
+          r: 3,
+          maxR: 12 + Math.min(18, vn * 0.08),
+          alpha: 1.0,
+          color: vn > 80 ? '#f59e0b' : '#38bdf8'
+        });
+
+        // Comminution kinetics & energy dose
+        const impactEnergy_mJ = 0.5 * 1.8 * Math.pow(this.peakImpactV, 2);
+        this.cumEnergy_J += impactEnergy_mJ * 1e-3;
+        if (this.d50_nm > this.d_limit_nm) {
+          this.d50_nm = Math.max(this.d_limit_nm, this.d50_nm * (1.0 - 0.00015 * rpmFactor));
+        }
+      }
+
+      splashPowderAt(x, y, nx, ny, intensity) {
+        const numEject = Math.min(8, Math.max(3, Math.floor(intensity * 0.4)));
+        const pCols = this.getPowderPalette();
+        for (let k = 0; k < numEject; k++) {
+          const spreadAngle = Math.atan2(ny, nx) + (Math.random() - 0.5) * 1.4;
+          const speed = intensity * (12 + Math.random() * 24);
+          this.ejecta.push({
+            x: x + (Math.random() - 0.5) * 4,
+            y: y + (Math.random() - 0.5) * 4,
+            vx: Math.cos(spreadAngle) * speed,
+            vy: Math.sin(spreadAngle) * speed,
+            r: 1.2 + Math.random() * 1.0,
+            color: pCols[k % pCols.length],
+            life: 1.0,
+            maxLife: 20 + Math.random() * 15
+          });
+        }
+      }
+
+      update(dt, sunRPM, k, tiltDeg, driveDir, isRotating) {
+        if (this.isPaused) return;
+
+        const effectiveDt = dt * this.simSpeed;
+        const subSteps = 6;
+        const subDt = effectiveDt / subSteps;
+
+        // Physical kinematics for real engineering telemetry
+        const omegaSunReal = isRotating ? (sunRPM * 2 * Math.PI / 60.0) : 0.0;
+        const omegaJarReal = isRotating ? (k * omegaSunReal * driveDir) : 0.0;
+
+        // Visual DEM motion scaling (simulates ~1.8s per rev high-speed strobe capture)
+        const visScale = 0.048;
+        const omegaSunVis = omegaSunReal * visScale;
+        const omegaJarVis = omegaJarReal * visScale;
+
+        // Outward Carrier Centrifugal Acceleration
+        // Outward direction is down (+Y, 0.5 * PI)
+        const outwardAngle = 0.5 * Math.PI;
+        const a_carr_mag = Math.pow(Math.max(1.0, sunRPM / 450.0), 1.8) * 1650.0;
+        const a_carr_x = 0;
+        const a_carr_y = isRotating ? a_carr_mag : 400.0; // residual settling gravity when stopped
+
+        // Earth Gravity coupled with X-tilt (0° vertical to 90° horizontal)
+        const tiltRad = (tiltDeg * Math.PI) / 180.0;
+        const gInPlane = Math.sin(tiltRad) * 650.0;
+        const gravAngle = outwardAngle - this.carrierAngle;
+        const a_grav_x = isRotating ? gInPlane * Math.cos(gravAngle) : 0;
+        const a_grav_y = isRotating ? gInPlane * Math.sin(gravAngle) : (tiltRad > 0 ? gInPlane : 0);
+
+        const a_bg_x = a_carr_x + a_grav_x;
+        const a_bg_y = a_carr_y + a_grav_y;
+
+        this.latestNetAngle = Math.atan2(a_bg_y, Math.abs(a_bg_x) > 0.001 ? a_bg_x : 0.0001);
+        this.latestNetG = isRotating ? (Math.pow(sunRPM / 450.0, 2) * 36.2) : 1.0;
+
+        for (let step = 0; step < subSteps; step++) {
+          this.jarAngle += omegaJarVis * subDt;
+          this.carrierAngle += omegaSunVis * subDt;
+
+          const v_wall_t = omegaJarVis * this.R_jar;
+
+          // 1. Update Grinding Balls
+          const nB = this.balls.length;
+          for (let i = 0; i < nB; i++) {
+            const b = this.balls[i];
+
+            // Coriolis acceleration in rotating frame
+            const a_cor_x = 2.0 * omegaSunVis * b.vy * 1.8;
+            const a_cor_y = -2.0 * omegaSunVis * b.vx * 1.8;
+
+            b.vx += (a_bg_x + a_cor_x) * subDt;
+            b.vy += (a_bg_y + a_cor_y) * subDt;
+
+            // Fluid / granular bed drag
+            b.vx *= 0.992;
+            b.vy *= 0.992;
+
+            b.x += b.vx * subDt;
+            b.y += b.vy * subDt;
+
+            // Wall Collision & Traction
+            const dx = b.x - this.cx;
+            const dy = b.y - this.cy;
+            const dist = Math.hypot(dx, dy);
+            const maxDist = this.R_jar - b.r;
+            if (dist > maxDist) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              b.x = this.cx + nx * maxDist;
+              b.y = this.cy + ny * maxDist;
+
+              const tx = -ny;
+              const ty = nx;
+
+              const v_wx = tx * v_wall_t;
+              const v_wy = ty * v_wall_t;
+
+              const rel_vx = b.vx - v_wx;
+              const rel_vy = b.vy - v_wy;
+
+              const vn = rel_vx * nx + rel_vy * ny;
+              const vt = rel_vx * tx + rel_vy * ty;
+
+              if (vn > 0) {
+                const eWall = 0.52;
+                const newVn = -vn * eWall;
+                const friction = 0.45;
+                const newVt = vt * (1.0 - friction);
+
+                b.vx = v_wx + newVn * nx + newVt * tx;
+                b.vy = v_wy + newVn * ny + newVt * ty;
+
+                b.spin += (vt * 0.03);
+
+                if (vn > 40.0) {
+                  this.recordImpact(b.x, b.y, vn, sunRPM);
+                  this.splashPowderAt(b.x, b.y, nx, ny, vn * 0.15);
+                }
+              }
+            }
+
+            b.spinAngle += b.spin * subDt;
+            b.spin *= 0.985;
+          }
+
+          // 2. Ball-Ball Collisions
+          for (let i = 0; i < nB; i++) {
+            const b1 = this.balls[i];
+            for (let j = i + 1; j < nB; j++) {
+              const b2 = this.balls[j];
+              const bdx = b2.x - b1.x;
+              const bdy = b2.y - b1.y;
+              const d = Math.hypot(bdx, bdy);
+              const minD = b1.r + b2.r;
+              if (d < minD && d > 0.001) {
+                const overlap = minD - d;
+                const nx = bdx / d;
+                const ny = bdy / d;
+
+                b1.x -= nx * overlap * 0.5;
+                b1.y -= ny * overlap * 0.5;
+                b2.x += nx * overlap * 0.5;
+                b2.y += ny * overlap * 0.5;
+
+                const rvx = b2.vx - b1.vx;
+                const rvy = b2.vy - b1.vy;
+                const rvn = rvx * nx + rvy * ny;
+
+                if (rvn < 0) {
+                  const eBall = 0.68;
+                  const imp = -(1.0 + eBall) * rvn / (1.0/b1.m + 1.0/b2.m);
+                  b1.vx -= (imp / b1.m) * nx;
+                  b1.vy -= (imp / b1.m) * ny;
+                  b2.vx += (imp / b2.m) * nx;
+                  b2.vy += (imp / b2.m) * ny;
+
+                  const rvt = rvx * (-ny) + rvy * nx;
+                  const fImp = rvt * 0.20;
+                  b1.vx += fImp * (-ny);
+                  b1.vy += fImp * nx;
+                  b2.vx -= fImp * (-ny);
+                  b2.vy -= fImp * nx;
+
+                  if (Math.abs(rvn) > 35.0) {
+                    const mx = (b1.x + b2.x) * 0.5;
+                    const my = (b1.y + b2.y) * 0.5;
+                    this.recordImpact(mx, my, Math.abs(rvn), sunRPM);
+                    this.splashPowderAt(mx, my, nx, ny, Math.abs(rvn) * 0.12);
+                  }
+                }
+              }
+            }
+          }
+
+          // 3. Update Powder Particles
+          const nP = this.powder.length;
+          for (let p = 0; p < nP; p++) {
+            const pw = this.powder[p];
+
+            pw.vx += a_bg_x * subDt;
+            pw.vy += a_bg_y * subDt;
+
+            pw.vx *= 0.94;
+            pw.vy *= 0.94;
+
+            pw.x += pw.vx * subDt;
+            pw.y += pw.vy * subDt;
+
+            const pDist = Math.hypot(pw.x - this.cx, pw.y - this.cy);
+            const pMax = this.R_jar - pw.r;
+            if (pDist > pMax) {
+              const nx = (pw.x - this.cx) / pDist;
+              const ny = (pw.y - this.cy) / pDist;
+              pw.x = this.cx + nx * pMax;
+              pw.y = this.cy + ny * pMax;
+
+              const tx = -ny;
+              const ty = nx;
+              pw.vx = tx * v_wall_t * 0.65 + (Math.random() - 0.5) * 6;
+              pw.vy = ty * v_wall_t * 0.65 + (Math.random() - 0.5) * 6;
+            }
+
+            // Entrainment & Displacement by Grinding Balls
+            for (let b = 0; b < nB; b++) {
+              const ball = this.balls[b];
+              const bdx = pw.x - ball.x;
+              const bdy = pw.y - ball.y;
+              const bDist = Math.hypot(bdx, bdy);
+              const pushR = ball.r + pw.r + 1.0;
+              if (bDist < pushR && bDist > 0.001) {
+                const bnx = bdx / bDist;
+                const bny = bdy / bDist;
+                pw.x = ball.x + bnx * pushR;
+                pw.y = ball.y + bny * pushR;
+                pw.vx = ball.vx * 0.70 + bnx * 12 + (Math.random() - 0.5) * 8;
+                pw.vy = ball.vy * 0.70 + bny * 12 + (Math.random() - 0.5) * 8;
+              }
+            }
+          }
+        }
+
+        // Update Sparks
+        for (let s = this.sparks.length - 1; s >= 0; s--) {
+          const sp = this.sparks[s];
+          sp.r += (sp.maxR - sp.r) * 0.22;
+          sp.alpha -= 0.055;
+          if (sp.alpha <= 0) this.sparks.splice(s, 1);
+        }
+
+        // Update Ejecta Spray
+        for (let e = this.ejecta.length - 1; e >= 0; e--) {
+          const ej = this.ejecta[e];
+          ej.x += ej.vx * effectiveDt;
+          ej.y += ej.vy * effectiveDt;
+          ej.vx *= 0.95;
+          ej.vy *= 0.95;
+          ej.life -= 1.0 / ej.maxLife;
+          if (ej.life <= 0) this.ejecta.splice(e, 1);
+        }
+
+        // Update Telemetry
+        this.updateTelemetryDOM(sunRPM, k, tiltDeg);
+      }
+
+      updateTelemetryDOM(sunRPM, k, tiltDeg) {
+        const elColl = document.getElementById('dem-collision-rate');
+        if (elColl) elColl.textContent = `${this.collisionRate.toLocaleString()} Hz`;
+        const elV = document.getElementById('dem-impact-velocity');
+        if (elV) elV.textContent = `${this.peakImpactV.toFixed(2)} m/s`;
+        const elE = document.getElementById('dem-impact-energy');
+        if (elE) elE.textContent = `${(0.5 * 1.8 * Math.pow(this.peakImpactV, 2)).toFixed(2)} mJ`;
+        const elP = document.getElementById('dem-impact-power');
+        if (elP) elP.textContent = `${(8.3 * (sunRPM / 450.0)).toFixed(1)} W`;
+
+        const elD50 = document.getElementById('dem-live-d50');
+        if (elD50) {
+          if (this.d50_nm >= 1000) {
+            elD50.textContent = `${(this.d50_nm / 1000.0).toFixed(2)} µm`;
+          } else {
+            elD50.textContent = `${Math.round(this.d50_nm)} nm`;
+          }
+        }
+
+        const elBar = document.getElementById('dem-d50-bar');
+        if (elBar) {
+          const pct = Math.min(100, Math.max(4, (1.0 - Math.log(this.d50_nm / this.d_limit_nm) / Math.log(45000.0 / this.d_limit_nm)) * 100));
+          elBar.style.width = `${pct}%`;
+        }
+
+        const elImpacts = document.getElementById('dem-total-impacts');
+        if (elImpacts) elImpacts.textContent = this.totalImpacts.toLocaleString();
+
+        const elDose = document.getElementById('dem-energy-dose');
+        if (elDose) elDose.textContent = `${(this.cumEnergy_J / (this.powderMass_g * 1e-3) / 3600.0).toFixed(2)} Wh/kg`;
+
+        const elHudSpin = document.getElementById('dem-hud-spin');
+        if (elHudSpin) elHudSpin.textContent = `ω: -${Math.round(Math.abs(k) * sunRPM)} RPM`;
+
+        const elHudG = document.getElementById('dem-hud-gforce');
+        if (elHudG && latestJarNetG && latestJarNetG[0] !== undefined) {
+          elHudG.textContent = `${latestJarNetG[0].toFixed(1)} G Net`;
+        }
+
+        const elHudRegime = document.getElementById('dem-hud-regime');
+        if (elHudRegime) {
+          const kAbs = Math.abs(k);
+          elHudRegime.textContent = kAbs < 1.2 ? 'Cascading' : kAbs <= 2.6 ? 'Cataracting' : 'Centrifuging';
+          elHudRegime.style.color = kAbs < 1.2 ? '#d97706' : kAbs <= 2.6 ? '#2563eb' : '#dc2626';
+        }
+      }
+
+      drawForcesCompass(ctx) {
+        const compX = this.width - 34;
+        const compY = this.height - 34;
+        const compR = 24;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(compX, compY, compR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Net G-force arrow (Red)
+        const fx = Math.cos(this.latestNetAngle) * 16;
+        const fy = Math.sin(this.latestNetAngle) * 16;
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(compX, compY);
+        ctx.lineTo(compX + fx, compY + fy);
+        ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(compX + fx, compY + fy, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Coriolis arrow (Cyan)
+        const cx_cor = -Math.sin(this.latestNetAngle) * 11;
+        const cy_cor = Math.cos(this.latestNetAngle) * 11;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(compX, compY);
+        ctx.lineTo(compX + cx_cor, compY + cy_cor);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      render() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.width, this.height);
+
+        // 1. Outer Metal Casing & Rim
+        ctx.save();
+        const gradRim = ctx.createRadialGradient(this.cx, this.cy, this.R_jar - 2, this.cx, this.cy, this.R_jar + 18);
+        gradRim.addColorStop(0, '#1e293b');
+        gradRim.addColorStop(0.4, '#475569');
+        gradRim.addColorStop(0.8, '#0f172a');
+        gradRim.addColorStop(1, '#020617');
+        ctx.fillStyle = gradRim;
+        ctx.beginPath();
+        ctx.arc(this.cx, this.cy, this.R_jar + 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Rotating Wall Graduation Marks & Teeth (shows Jar #1 spinning!)
+        ctx.save();
+        ctx.translate(this.cx, this.cy);
+        ctx.rotate(this.jarAngle);
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.5;
+        for (let a = 0; a < 24; a++) {
+          const ang = (a * Math.PI * 2) / 24;
+          const r1 = this.R_jar - (a % 6 === 0 ? 8 : 4);
+          const r2 = this.R_jar;
+          ctx.beginPath();
+          ctx.moveTo(r1 * Math.cos(ang), r1 * Math.sin(ang));
+          ctx.lineTo(r2 * Math.cos(ang), r2 * Math.sin(ang));
+          ctx.stroke();
+        }
+        // High-visibility gold notch at 0 rad
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(this.R_jar - 5, 0, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 3. Chamber Interior
+        const gradChamber = ctx.createRadialGradient(this.cx, this.cy, 5, this.cx, this.cy, this.R_jar);
+        gradChamber.addColorStop(0, '#0f172a');
+        gradChamber.addColorStop(0.7, '#090d16');
+        gradChamber.addColorStop(1, '#04070d');
+        ctx.fillStyle = gradChamber;
+        ctx.beginPath();
+        ctx.arc(this.cx, this.cy, this.R_jar, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Chamber inner border line
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(this.cx, this.cy, this.R_jar, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Center crosshair
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(this.cx - 12, this.cy); ctx.lineTo(this.cx + 12, this.cy);
+        ctx.moveTo(this.cx, this.cy - 12); ctx.lineTo(this.cx, this.cy + 12);
+        ctx.stroke();
+
+        // 4. Draw Dry Powder Particles
+        if (this.viewMode === 'all' || this.viewMode === 'powder') {
+          const pLen = this.powder.length;
+          for (let p = 0; p < pLen; p++) {
+            const pw = this.powder[p];
+            ctx.fillStyle = pw.color;
+            ctx.globalAlpha = pw.alpha;
+            ctx.beginPath();
+            ctx.arc(pw.x, pw.y, pw.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1.0;
+
+          // Ejecta Powder Spray
+          for (let e = 0; e < this.ejecta.length; e++) {
+            const ej = this.ejecta[e];
+            ctx.fillStyle = ej.color;
+            ctx.globalAlpha = Math.max(0, ej.life);
+            ctx.beginPath();
+            ctx.arc(ej.x, ej.y, ej.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1.0;
+        }
+
+        // 5. Draw Grinding Balls
+        if (this.viewMode === 'all' || this.viewMode === 'balls') {
+          const bLen = this.balls.length;
+          for (let b = 0; b < bLen; b++) {
+            const ball = this.balls[b];
+
+            // Ball drop shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            ctx.arc(ball.x + 2, ball.y + 2, ball.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 3D Sphere Radial Gradient (Glossy Zirconia Ceramic)
+            const bGrad = ctx.createRadialGradient(
+              ball.x - ball.r * 0.35, ball.y - ball.r * 0.35, ball.r * 0.1,
+              ball.x, ball.y, ball.r
+            );
+            bGrad.addColorStop(0, '#ffffff');
+            bGrad.addColorStop(0.5, '#e2e8f0');
+            bGrad.addColorStop(0.85, '#94a3b8');
+            bGrad.addColorStop(1, '#475569');
+
+            ctx.fillStyle = bGrad;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Shiny specular highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.beginPath();
+            ctx.arc(ball.x - ball.r * 0.3, ball.y - ball.r * 0.3, ball.r * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Subtle rotation indicator notch to visualize rolling
+            ctx.strokeStyle = 'rgba(71, 85, 105, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(ball.x, ball.y);
+            ctx.lineTo(ball.x + ball.r * Math.cos(ball.spinAngle), ball.y + ball.r * Math.sin(ball.spinAngle));
+            ctx.stroke();
+          }
+        }
+
+        // 6. Draw Collision Sparks & Shockwaves
+        for (let s = 0; s < this.sparks.length; s++) {
+          const sp = this.sparks[s];
+          ctx.strokeStyle = sp.color;
+          ctx.lineWidth = 2.0;
+          ctx.globalAlpha = sp.alpha;
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // 7. Force Vectors Compass
+        if (this.viewMode === 'forces' || this.viewMode === 'all') {
+          this.drawForcesCompass(ctx);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    // --- JAR #1 DEM PANEL CONTROLLER & INTERACTIONS ---
+    const jar1DemPanel = document.getElementById('jar1-dem-panel');
+    let isJar1PanelOpen = true; // Open by default
+    let jar1Sim = null;
+
+    const demCanvas = document.getElementById('jar1-dem-canvas');
+    if (demCanvas) {
+      jar1Sim = new Jar1DEMSimulator(demCanvas);
+    }
+
+    function setJar1PanelVisible(show) {
+      isJar1PanelOpen = show;
+      if (jar1DemPanel) {
+        jar1DemPanel.style.display = show ? 'flex' : 'none';
+      }
+      const dockBtn = document.getElementById('btn-toggle-jar1-sim');
+      if (dockBtn) dockBtn.classList.toggle('active', show);
+    }
+
+    // Toggle button in bottom dock
+    const btnToggleJar1Sim = document.getElementById('btn-toggle-jar1-sim');
+    if (btnToggleJar1Sim) {
+      btnToggleJar1Sim.addEventListener('click', () => {
+        setJar1PanelVisible(!isJar1PanelOpen);
+      });
+    }
+
+    // Button in Jar #1 telemetry card
+    const btnCardJar1Sim = document.getElementById('btn-card-jar1-sim');
+    if (btnCardJar1Sim) {
+      btnCardJar1Sim.addEventListener('click', () => {
+        setJar1PanelVisible(true);
+        if (jar1DemPanel) jar1DemPanel.classList.remove('collapsed');
+      });
+    }
+
+    // Close button
+    const btnDemClose = document.getElementById('btn-dem-close');
+    if (btnDemClose) {
+      btnDemClose.addEventListener('click', () => {
+        setJar1PanelVisible(false);
+      });
+    }
+
+    // Minimize / Expand button
+    const btnDemMin = document.getElementById('btn-dem-min');
+    if (btnDemMin) {
+      btnDemMin.addEventListener('click', () => {
+        if (jar1DemPanel) {
+          jar1DemPanel.classList.toggle('collapsed');
+          btnDemMin.textContent = jar1DemPanel.classList.contains('collapsed') ? '▢' : '_';
+        }
+      });
+    }
+
+    // Reset button
+    const btnDemReset = document.getElementById('btn-dem-reset');
+    if (btnDemReset) {
+      btnDemReset.addEventListener('click', () => {
+        if (jar1Sim) {
+          jar1Sim.d50_nm = 45000.0;
+          jar1Sim.totalImpacts = 0;
+          jar1Sim.cumEnergy_J = 0.0;
+          jar1Sim.initCharge();
+        }
+      });
+    }
+
+    // Play/Pause button
+    const btnDemPlayPause = document.getElementById('btn-dem-playpause');
+    if (btnDemPlayPause) {
+      btnDemPlayPause.addEventListener('click', () => {
+        if (jar1Sim) {
+          jar1Sim.isPaused = !jar1Sim.isPaused;
+          btnDemPlayPause.textContent = jar1Sim.isPaused ? '▶ Play' : '⏸ Pause';
+          btnDemPlayPause.classList.toggle('active', jar1Sim.isPaused);
+        }
+      });
+    }
+
+    // View mode buttons
+    document.querySelectorAll('[data-dem-view]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-dem-view]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (jar1Sim) jar1Sim.viewMode = btn.getAttribute('data-dem-view');
+      });
+    });
+
+    // Speed buttons
+    document.querySelectorAll('[data-dem-speed]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-dem-speed]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (jar1Sim) jar1Sim.simSpeed = parseFloat(btn.getAttribute('data-dem-speed'));
+      });
+    });
+
+    // Powder burst button
+    const btnDemBurst = document.getElementById('btn-dem-burst');
+    if (btnDemBurst) {
+      btnDemBurst.addEventListener('click', () => {
+        if (jar1Sim) jar1Sim.triggerPowderBurst();
+      });
+    }
+
+    // Select dropdowns
+    const selBalls = document.getElementById('dem-sel-balls');
+    if (selBalls) {
+      selBalls.addEventListener('change', (e) => {
+        if (jar1Sim) jar1Sim.setBallCount(e.target.value);
+      });
+    }
+
+    const selMat = document.getElementById('dem-sel-powder-mat');
+    if (selMat) {
+      selMat.addEventListener('change', (e) => {
+        if (jar1Sim) jar1Sim.setPowderMaterial(e.target.value);
+      });
+    }
+
+    const selParticles = document.getElementById('dem-sel-particle-count');
+    if (selParticles) {
+      selParticles.addEventListener('change', (e) => {
+        if (jar1Sim) jar1Sim.setPowderCount(e.target.value);
+      });
+    }
+
+    const selMass = document.getElementById('dem-sel-powder-mass');
+    if (selMass) {
+      selMass.addEventListener('change', (e) => {
+        if (jar1Sim) jar1Sim.powderMass_g = parseFloat(e.target.value) || 25.0;
+      });
+    }
+
+    // Make Panel Draggable via its header
+    const dragHandle = document.getElementById('dem-panel-drag-handle');
+    if (dragHandle && jar1DemPanel) {
+      let isDragging = false;
+      let startX = 0, startY = 0;
+      let initLeft = 0, initTop = 0;
+
+      dragHandle.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = jar1DemPanel.getBoundingClientRect();
+        initLeft = rect.left;
+        initTop = rect.top;
+        jar1DemPanel.style.right = 'auto';
+        jar1DemPanel.style.left = `${initLeft}px`;
+        jar1DemPanel.style.top = `${initTop}px`;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        jar1DemPanel.style.left = `${Math.max(10, Math.min(window.innerWidth - 300, initLeft + dx))}px`;
+        jar1DemPanel.style.top = `${Math.max(10, Math.min(window.innerHeight - 100, initTop + dy))}px`;
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+    }
+
     // --- ANIMATION LOOP ---
     function animate() {
       requestAnimationFrame(animate);
@@ -1489,6 +2670,12 @@
           document.querySelectorAll('.jar-hud-badge').forEach(b => b.classList.remove('highlighted'));
           document.querySelectorAll('.jar-card').forEach(c => c.style.borderColor = '#e2e8f0');
         }
+      }
+
+      // Update Jar #1 DEM Particle & Dry Powder Simulation
+      if (jar1Sim && isJar1PanelOpen) {
+        jar1Sim.update(0.016, currentSunRPM, currentK, currentTiltDeg, driveDir, isRotating);
+        jar1Sim.render();
       }
 
       controls.update();
