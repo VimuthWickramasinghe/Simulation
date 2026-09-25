@@ -570,13 +570,37 @@
           <div style="font-size:11px; color:#475569;" id="disp-sun-rads">47.1 rad/s</div>
         </div>
 
-        <input type="range" class="rpm-slider-ctrl" id="slider-rpm" min="100" max="1000" step="25" value="450.0">
+        <input type="range" class="rpm-slider-ctrl" id="slider-rpm" min="0" max="1000" step="10" value="450.0">
 
-        <div class="btn-grid">
+        <div class="btn-grid" style="grid-template-columns: repeat(6, 1fr);">
+          <button class="ctrl-btn" data-preset-rpm="0">0 (Stop)</button>
+          <button class="ctrl-btn" data-preset-rpm="100">100</button>
           <button class="ctrl-btn" data-preset-rpm="300">300</button>
           <button class="ctrl-btn active" data-preset-rpm="450">450</button>
-          <button class="ctrl-btn" data-preset-rpm="600">600</button>
-          <button class="ctrl-btn" data-preset-rpm="800">800</button>
+          <button class="ctrl-btn" data-preset-rpm="700">700</button>
+          <button class="ctrl-btn" data-preset-rpm="1000">1000</button>
+        </div>
+
+        <!-- Time Scale & Real-Time Tachometer Mode -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:11.5px;">
+            <span>⏱️ Playback Speed:</span>
+            <strong id="disp-timescale-val" style="color:#0284c7; font-weight:800;">1.0x (Real-Time 1:1)</strong>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-top:4px;">
+            <button class="ctrl-btn timescale-btn active" data-timescale="1.0" title="True Physical Real-Time (100 RPM = 0.60s/rev)">1.0x Real</button>
+            <button class="ctrl-btn timescale-btn" data-timescale="0.5" title="Half Speed (50%)">0.5x</button>
+            <button class="ctrl-btn timescale-btn" data-timescale="0.25" title="Quarter Speed (25%)">0.25x</button>
+            <button class="ctrl-btn timescale-btn" data-timescale="0.1" title="Slow-Motion Analysis (10%)">0.1x Slow</button>
+          </div>
+          <div style="margin-top:6px; font-size:10px; color:#64748b; display:flex; justify-content:space-between; border-top:1px dashed #e2e8f0; padding-top:4px;">
+            <span>Period / Rev:</span>
+            <strong id="disp-rev-period" style="color:#0f172a; font-family:ui-monospace, monospace;">0.13 s</strong>
+          </div>
+          <div style="font-size:10px; color:#64748b; display:flex; justify-content:space-between;">
+            <span>Carrier Frequency:</span>
+            <strong id="disp-carrier-freq" style="color:#0f172a; font-family:ui-monospace, monospace;">7.50 Hz</strong>
+          </div>
         </div>
 
         <div class="section-title">Transmission Ratio (k = ω/Ω)</div>
@@ -721,6 +745,7 @@
       <button class="dock-btn active" id="btn-toggle-tooltips">🏷️ Tooltips</button>
       <button class="dock-btn active" id="btn-toggle-jar1-sim" style="background:#e0f2fe; color:#0369a1; border-color:#7dd3fc; font-weight:700;">🔬 Jar #1 Particle Sim</button>
       <button class="dock-btn" id="btn-toggle-tilt">🔄 Tilt: 0° Vert</button>
+      <button class="dock-btn active" id="btn-toggle-speed">⏱️ 1.0x Real-Time</button>
       <button class="dock-btn" id="btn-reset-cam">Reset View</button>
     </div>
 
@@ -1199,6 +1224,8 @@
     const latestJarNetG = [];
     for (let i = 0; i < nVials; i++) latestJarNetG.push(36.2);
     let animClock = 0.0;
+    const simClock = new THREE.Clock();
+    let timeScale = 1.0; // 1.0 = true physical real-time (100 RPM = 0.60s/rev)
 
     for (let i = 0; i < nVials; i++) {
       const angle = (i * 2 * Math.PI) / nVials;
@@ -1453,18 +1480,34 @@
       document.getElementById('disp-sun-rpm').innerHTML = `${Math.round(sunRPM)} <span style="font-size:14px; font-weight:600; color:#64748b;">RPM</span>`;
       document.getElementById('disp-sun-rads').textContent = `${(sunRPM * 2 * Math.PI / 60).toFixed(1)} rad/s`;
 
+      // Live Period & Carrier Frequency for Tachometer
+      const elPeriod = document.getElementById('disp-rev-period');
+      const elFreq = document.getElementById('disp-carrier-freq');
+      if (sunRPM <= 0) {
+        if (elPeriod) elPeriod.textContent = "— (Stopped)";
+        if (elFreq) elFreq.textContent = "0.00 Hz";
+      } else {
+        const revPeriodSec = (60.0 / sunRPM) / timeScale;
+        const carrierFreqHz = (sunRPM * timeScale) / 60.0;
+        if (elPeriod) elPeriod.textContent = `${revPeriodSec.toFixed(2)} s`;
+        if (elFreq) elFreq.textContent = `${carrierFreqHz.toFixed(2)} Hz`;
+      }
+
       // Centrifugal G-Force
       const omega_sun = (sunRPM * 2 * Math.PI) / 60.0;
       const gSun = (Math.pow(omega_sun, 2) * 0.16) / 9.80665;
       document.getElementById('stat-gforce-val').textContent = `${gSun.toFixed(1)} G`;
 
       // Impact Velocity
-      const vImp = omega_sun * 0.16 * Math.sqrt(Math.max(0.1, 1.0 + Math.pow(k, 2)*Math.pow(0.28125, 2) - 2*kAbs*(0.28125))) * 0.72;
+      const vImp = sunRPM <= 0 ? 0.0 : (omega_sun * 0.16 * Math.sqrt(Math.max(0.1, 1.0 + Math.pow(k, 2)*Math.pow(0.28125, 2) - 2*kAbs*(0.28125))) * 0.72);
       document.getElementById('stat-vimp-val').textContent = `${vImp.toFixed(2)} m/s`;
 
       // Regime Badge
       const regimeEl = document.getElementById('stat-regime-val');
-      if (kAbs < 1.2) {
+      if (sunRPM <= 0) {
+        regimeEl.textContent = "System At Rest (0 RPM)";
+        regimeEl.style.color = "#64748b";
+      } else if (kAbs < 1.2) {
         regimeEl.textContent = "Cascading (Attrition)";
         regimeEl.style.color = "#d97706";
       } else if (kAbs <= 2.6) {
@@ -1489,24 +1532,32 @@
         const gEl = document.getElementById(`stat-jar-g-${i}`);
         const vEl = document.getElementById(`stat-jar-vtip-${i}`);
 
-        if (relEl) relEl.textContent = `-${Math.round(jarRelRPM)} RPM`;
-        if (absEl) absEl.textContent = `-${Math.round(jarAbsRPM)} RPM (Opposite)`;
-        if (gEl) gEl.textContent = `${gWall.toFixed(1)} G`;
-        if (vEl) vEl.textContent = `${vTip.toFixed(2)} m/s`;
+        if (sunRPM <= 0) {
+          if (relEl) relEl.textContent = "0 RPM (Stopped)";
+          if (absEl) absEl.textContent = "0 RPM (At Rest)";
+          if (gEl) gEl.textContent = "0.0 G";
+          if (vEl) vEl.textContent = "0.00 m/s";
+        } else {
+          if (relEl) relEl.textContent = `-${Math.round(jarRelRPM)} RPM`;
+          if (absEl) absEl.textContent = `-${Math.round(jarAbsRPM)} RPM (Opposite)`;
+          if (gEl) gEl.textContent = `${gWall.toFixed(1)} G`;
+          if (vEl) vEl.textContent = `${vTip.toFixed(2)} m/s`;
+        }
 
         // Update live HUD tooltip badges and popovers
         const hudG = document.getElementById(`hud-g-val-${i}`);
         const popG = document.getElementById(`pop-g-${i}`);
         const popAccel = document.getElementById(`pop-accel-${i}`);
         const popRpm = document.getElementById(`pop-rpm-${i}`);
-        if (hudG) hudG.textContent = `${gSun.toFixed(1)} G`;
-        if (popG) popG.textContent = `${gSun.toFixed(1)} G`;
-        if (popAccel) popAccel.textContent = `${(gSun * 9.80665).toFixed(1)} m/s²`;
-        if (popRpm) popRpm.textContent = `-${Math.round(jarRelRPM)} RPM (Opposite)`;
+        const displayG = sunRPM <= 0 ? 1.0 : gSun;
+        if (hudG) hudG.textContent = `${displayG.toFixed(1)} G`;
+        if (popG) popG.textContent = `${displayG.toFixed(1)} G`;
+        if (popAccel) popAccel.textContent = `${(displayG * 9.80665).toFixed(1)} m/s²`;
+        if (popRpm) popRpm.textContent = sunRPM <= 0 ? "0 RPM (Stopped)" : `-${Math.round(jarRelRPM)} RPM (Opposite)`;
 
         // Scale Red G-Force arrow with G-force magnitude
         if (gForceArrows[i]) {
-          const gScale = Math.min(1.4, Math.max(0.65, Math.sqrt(gSun / 36.2)));
+          const gScale = Math.min(1.4, Math.max(0.35, Math.sqrt(displayG / 36.2)));
           gForceArrows[i].scale.set(1.0, gScale, 1.0);
         }
       }
@@ -1515,6 +1566,56 @@
       if (typeof jar1Sim !== 'undefined' && jar1Sim) {
         jar1Sim.updateTelemetryDOM(sunRPM, k, currentTiltDeg);
       }
+    }
+
+    // --- PLAYBACK SPEED & REAL-TIME TACHOMETER CONTROLLER ---
+    function setPlaybackSpeed(scale) {
+      scale = Math.max(0.01, Math.min(2.0, parseFloat(scale) || 1.0));
+      timeScale = scale;
+      
+      const label = scale === 1.0 ? "1.0x (Real-Time 1:1)" : `${scale}x (${scale < 1.0 ? 'Slow-Mo' : 'Fast'})`;
+      const dispEl = document.getElementById('disp-timescale-val');
+      if (dispEl) dispEl.textContent = label;
+      
+      document.querySelectorAll('[data-timescale]').forEach(b => {
+        b.classList.toggle('active', Math.abs(parseFloat(b.getAttribute('data-timescale')) - scale) < 0.01);
+      });
+
+      const btnDock = document.getElementById('btn-toggle-speed');
+      if (btnDock) {
+        btnDock.textContent = scale === 1.0 ? "⏱️ 1.0x Real-Time" : `⏱️ Speed: ${scale}x`;
+        btnDock.classList.toggle('active', scale === 1.0);
+      }
+
+      // Update Tachometer period & frequency readout
+      const elPeriod = document.getElementById('disp-rev-period');
+      const elFreq = document.getElementById('disp-carrier-freq');
+      if (currentSunRPM <= 0) {
+        if (elPeriod) elPeriod.textContent = "— (Stopped)";
+        if (elFreq) elFreq.textContent = "0.00 Hz";
+      } else {
+        const revPeriodSec = (60.0 / currentSunRPM) / timeScale;
+        const carrierFreqHz = (currentSunRPM * timeScale) / 60.0;
+        if (elPeriod) elPeriod.textContent = `${revPeriodSec.toFixed(2)} s`;
+        if (elFreq) elFreq.textContent = `${carrierFreqHz.toFixed(2)} Hz`;
+      }
+    }
+
+    // Playback Speed Buttons
+    document.querySelectorAll('[data-timescale]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const scale = parseFloat(btn.getAttribute('data-timescale'));
+        setPlaybackSpeed(scale);
+      });
+    });
+
+    // Bottom Dock Speed Toggle Button (Toggles between 1.0x Real-Time and 0.1x Slow-Mo)
+    const btnToggleSpeed = document.getElementById('btn-toggle-speed');
+    if (btnToggleSpeed) {
+      btnToggleSpeed.addEventListener('click', () => {
+        const targetScale = Math.abs(timeScale - 1.0) < 0.01 ? 0.1 : 1.0;
+        setPlaybackSpeed(targetScale);
+      });
     }
 
     // RPM Slider
@@ -1950,9 +2051,9 @@
           this.impactHistory.shift();
         }
         // Jar Spindle RPM (e.g. 900 RPM at nominal k=-2.0, 450 RPM sun) drives collision kinetics
-        const jarFactor = (jarRPM || 900.0) / 900.0;
-        this.collisionRate = Math.round(this.impactHistory.length * 4.2 * jarFactor + 1600 * jarFactor);
-        this.peakImpactV = Math.max(0.6, Math.min(6.5, 2.45 * jarFactor + (Math.random() - 0.5) * 0.25));
+        const jarFactor = jarRPM > 0 ? (jarRPM / 900.0) : 0.0;
+        this.collisionRate = jarRPM > 0 ? Math.round(this.impactHistory.length * 4.2 * jarFactor + 1600 * jarFactor) : 0;
+        this.peakImpactV = jarRPM > 0 ? Math.max(0.6, Math.min(6.5, 2.45 * jarFactor + (Math.random() - 0.5) * 0.25)) : 0.0;
 
         // Impact spark shockwave
         this.sparks.push({
@@ -1991,15 +2092,15 @@
         }
       }
 
-      update(dt, sunRPM, k, tiltDeg, driveDir, isRotating, a_radial, a_tangent, netG, vialSpinSpeed) {
+      update(dt, sunRPM, k, tiltDeg, driveDir, isRotating, a_radial, a_tangent, netG, vialSpinSpeed, timeScale = 1.0) {
         if (this.isPaused) return;
 
-        const effectiveDt = dt * this.simSpeed;
+        const effectiveDt = dt * this.simSpeed * timeScale;
         const subSteps = 6;
         const subDt = effectiveDt / subSteps;
 
         // Visual DEM motion scaling (simulates ~1.8s per rev high-speed strobe capture)
-        const omegaSunReal = isRotating ? (sunRPM * 2 * Math.PI / 60.0) : 0.0;
+        const omegaSunReal = (isRotating && sunRPM > 0) ? (sunRPM * 2 * Math.PI / 60.0) : 0.0;
         const visScale = 0.048;
         const omegaSunVis = omegaSunReal * visScale * driveDir;
 
@@ -2007,15 +2108,15 @@
         // When carrier turns CCW, the reversing intermediate idler gear causes the jar drum to rotate CW.
         const speedRatio = Math.abs(k);
         const jarRPM = speedRatio * sunRPM;
-        const omegaJarVis = isRotating ? (speedRatio * Math.abs(omegaSunVis)) : 0.0;
+        const omegaJarVis = (isRotating && sunRPM > 0) ? (speedRatio * Math.abs(omegaSunVis)) : 0.0;
 
         // Map real-time physics vectors (m/s²) directly into canvas simulation units (px/s²)
         // 1 G (9.80665 m/s²) = 45.0 px/s²
         const scaleAcc = 45.0 / 9.80665;
         let a_bg_x = (a_tangent !== undefined ? a_tangent : 0) * scaleAcc;
-        let a_bg_y = (a_radial !== undefined ? a_radial : (isRotating ? (Math.pow(sunRPM / 450.0, 2) * 355.0) : 0)) * scaleAcc;
+        let a_bg_y = (a_radial !== undefined ? a_radial : ((isRotating && sunRPM > 0) ? (Math.pow(sunRPM / 450.0, 2) * 355.0) : 0)) * scaleAcc;
 
-        if (!isRotating) {
+        if (!isRotating || sunRPM <= 0) {
           if (tiltDeg === 0) {
             a_bg_x = 0;
             a_bg_y = 60.0; // gentle bottom wall settling
@@ -2220,20 +2321,23 @@
 
       updateTelemetryDOM(sunRPM, k, tiltDeg) {
         const speedRatio = Math.abs(k);
-        const jarRPM = speedRatio * sunRPM;
-        const jarFactor = (jarRPM || 900.0) / 900.0;
+        const jarRPM = sunRPM > 0 ? speedRatio * sunRPM : 0;
+        const jarFactor = jarRPM > 0 ? (jarRPM / 900.0) : 0.0;
         const omega_vial = (jarRPM * 2 * Math.PI) / 60.0;
         const gWall = (Math.pow(omega_vial, 2) * 0.045) / 9.80665;
 
         const elJarRpm = document.getElementById('dem-active-jar-rpm');
-        if (elJarRpm) elJarRpm.textContent = `-${Math.round(jarRPM)} RPM`;
+        if (elJarRpm) elJarRpm.textContent = sunRPM <= 0 ? "0 RPM (Stopped)" : `-${Math.round(jarRPM)} RPM`;
+
+        const displayCollRate = sunRPM > 0 ? Math.round(this.collisionRate) : 0;
+        const displayPeakV = sunRPM > 0 ? this.peakImpactV : 0.0;
 
         const elColl = document.getElementById('dem-collision-rate');
-        if (elColl) elColl.textContent = `${Math.round(this.collisionRate).toLocaleString()} Hz`;
+        if (elColl) elColl.textContent = `${displayCollRate.toLocaleString()} Hz`;
         const elV = document.getElementById('dem-impact-velocity');
-        if (elV) elV.textContent = `${this.peakImpactV.toFixed(2)} m/s`;
+        if (elV) elV.textContent = `${displayPeakV.toFixed(2)} m/s`;
         const elE = document.getElementById('dem-impact-energy');
-        if (elE) elE.textContent = `${(0.5 * 1.8 * Math.pow(this.peakImpactV, 2)).toFixed(2)} mJ`;
+        if (elE) elE.textContent = `${(0.5 * 1.8 * Math.pow(displayPeakV, 2)).toFixed(2)} mJ`;
         const elP = document.getElementById('dem-impact-power');
         if (elP) elP.textContent = `${(8.3 * Math.pow(jarFactor, 2)).toFixed(1)} W`;
 
@@ -2259,19 +2363,30 @@
         if (elDose) elDose.textContent = `${(this.cumEnergy_J / (this.powderMass_g * 1e-3) / 3600.0).toFixed(2)} Wh/kg`;
 
         const elHudSpin = document.getElementById('dem-hud-spin');
-        if (elHudSpin) elHudSpin.innerHTML = `Jar: <b style="color:#38bdf8;">-${Math.round(jarRPM)} RPM</b> | Sun: <b>+${Math.round(sunRPM)} RPM</b>`;
+        if (elHudSpin) {
+          if (sunRPM <= 0) {
+            elHudSpin.innerHTML = `Jar: <b style="color:#64748b;">0 RPM (Stopped)</b> | Sun: <b style="color:#64748b;">0 RPM (Stopped)</b>`;
+          } else {
+            elHudSpin.innerHTML = `Jar: <b style="color:#38bdf8;">-${Math.round(jarRPM)} RPM</b> | Sun: <b>+${Math.round(sunRPM)} RPM</b>`;
+          }
+        }
 
         const elHudG = document.getElementById('dem-hud-gforce');
         if (elHudG) {
-          const gVal = this.latestNetG !== undefined ? this.latestNetG : (latestJarNetG && latestJarNetG[0] !== undefined ? latestJarNetG[0] : 36.2);
+          const gVal = this.latestNetG !== undefined ? this.latestNetG : (latestJarNetG && latestJarNetG[0] !== undefined ? latestJarNetG[0] : (sunRPM <= 0 ? 1.0 : 36.2));
           elHudG.innerHTML = `Net: <b style="color:#ef4444;">${gVal.toFixed(1)} G</b> | Wall: <b>${gWall.toFixed(1)} G</b>`;
         }
 
         const elHudRegime = document.getElementById('dem-hud-regime');
         if (elHudRegime) {
-          const kAbs = Math.abs(k);
-          elHudRegime.textContent = kAbs < 1.2 ? 'Cascading' : kAbs <= 2.6 ? 'Cataracting' : 'Centrifuging';
-          elHudRegime.style.color = kAbs < 1.2 ? '#d97706' : kAbs <= 2.6 ? '#2563eb' : '#dc2626';
+          if (sunRPM <= 0) {
+            elHudRegime.textContent = 'At Rest (0 RPM)';
+            elHudRegime.style.color = '#64748b';
+          } else {
+            const kAbs = Math.abs(k);
+            elHudRegime.textContent = kAbs < 1.2 ? 'Cascading' : kAbs <= 2.6 ? 'Cataracting' : 'Centrifuging';
+            elHudRegime.style.color = kAbs < 1.2 ? '#d97706' : kAbs <= 2.6 ? '#2563eb' : '#dc2626';
+          }
         }
       }
 
@@ -2685,15 +2800,23 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      // Carrier & Jar Spindle Rotational Kinematics
-      const currentOmega = isRotating ? (driveDir * (currentSunRPM / 450.0) * 0.012) : 0.0;
-      const speedRatio = Math.abs(currentK);
-      // REVERSING GEAR: Jars rotate in the OPPOSITE direction to the sun wheel!
-      const vialSpinSpeed = -speedRatio * currentOmega;
-      const idlerSpinSpeed = -(currentZs / currentZidler) * currentOmega;
+      // Carrier & Jar Spindle Rotational Kinematics (High-Precision Real-Time Clock)
+      const dt = simClock.getDelta();
+      // Clamp dt to avoid big jumps on tab blur
+      const clampedDt = Math.min(0.05, Math.max(0.0005, dt));
 
-      if (isRotating) {
-        sunAssembly.rotation.y += currentOmega;
+      // True physical angular velocity in radians per second:
+      // omega (rad/s) = RPM * 2 * PI / 60
+      const omega_sun_rad_s = (currentSunRPM * 2.0 * Math.PI) / 60.0;
+      
+      // Incremental rotation angle in radians for this frame (scaled by timeScale and driveDir)
+      const frameDeltaAngle = (isRotating && currentSunRPM > 0) ? (driveDir * omega_sun_rad_s * clampedDt * timeScale) : 0.0;
+      const speedRatio = Math.abs(currentK);
+      const vialSpinSpeed = -speedRatio * frameDeltaAngle;
+      const idlerSpinSpeed = -(currentZs / currentZidler) * frameDeltaAngle;
+
+      if (isRotating && currentSunRPM > 0) {
+        sunAssembly.rotation.y += frameDeltaAngle;
         // Analytical conjugate tooth meshing: lock gear angles directly to carrier rotation angle (zero drift, zero offset)
         vials.forEach(v => {
           v.group.rotation.y = -v.angle - speedRatio * sunAssembly.rotation.y;
@@ -2701,14 +2824,14 @@
         idlerGearMeshes.forEach(m => {
           m.rotation.z = (Math.PI / currentZidler) - (currentZs / currentZidler) * sunAssembly.rotation.y;
         });
-        animClock += 0.025 * Math.max(0.1, currentSunRPM / 450.0) * driveDir;
+        animClock += clampedDt * timeScale * driveDir;
       }
 
       // Ensure all world transformation matrices are fully up-to-date
       rootAssembly.updateMatrixWorld(true);
 
       // Physics Parameters
-      const omega_sun = isRotating ? ((currentSunRPM * 2 * Math.PI) / 60.0) : 0.0;
+      const omega_sun = (isRotating && currentSunRPM > 0) ? ((currentSunRPM * 2 * Math.PI) / 60.0) : 0.0;
       const R_s_m = 0.16; // Carrier radius in meters
       const a_cf_mag = Math.pow(omega_sun, 2) * R_s_m; // Centrifugal acceleration (m/s²)
       const g_world = new THREE.Vector3(0, -9.80665, 0); // Earth gravity (m/s²) along world -Y
@@ -2914,7 +3037,7 @@
 
       // Update Jar #1 DEM Particle & Dry Powder Simulation
       if (jar1Sim && isJar1PanelOpen) {
-        jar1Sim.update(0.016, currentSunRPM, currentK, currentTiltDeg, driveDir, isRotating, jar1_a_radial, jar1_a_tangent, jar1_netG, vialSpinSpeed);
+        jar1Sim.update(clampedDt, currentSunRPM, currentK, currentTiltDeg, driveDir, isRotating, jar1_a_radial, jar1_a_tangent, jar1_netG, vialSpinSpeed, timeScale);
         jar1Sim.render();
       }
 
